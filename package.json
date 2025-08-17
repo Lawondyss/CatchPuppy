@@ -1,0 +1,17 @@
+{
+  "name": "puppy",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "zip": "yarn build && mkdir -p dist && zip -r dist/game.zip dist -x \"**/.DS_Store\""
+  },
+  "dependencies": {
+    "kaplay": "^3001.0.19"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "vite": "^7.1.2"
+  }
+}
