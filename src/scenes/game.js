@@ -27,8 +27,8 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
 
   k.scene('game', () => {
     GameStore.score = 0
-    let timeLimit = START_TIMER
-    let timer = timeLimit
+    let difficulty = 0
+    let timer = START_TIMER
 
     const background = new Background(k)
     const bushes = new Bushes(k, WALL_THICKNESS)
@@ -95,12 +95,12 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
       scoreLabel.text = 'Chycen: ' + GameStore.score
 
       if (GameStore.score > 0 && GameStore.score % 5 === 0) {
-        timeLimit = Math.max(1, timeLimit - 1)
+        difficulty++
       }
 
-      timer = timeLimit
+      timer = Math.max(1, START_TIMER - difficulty)
       background.setRandomColor()
-      bushes.regenerate(player, puppy)
+      bushes.regenerate(player, puppy, difficulty)
     })
 
     k.onUpdate(() => {
