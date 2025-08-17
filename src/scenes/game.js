@@ -6,7 +6,7 @@ import { Background } from '../libs/background.js'
 import { Text } from '../libs/text.js'
 import { Bushes } from '../world/bushes.js'
 
-const PUPPY_FLEE_DISTANCE = 300;
+const PUPPY_FLEE_DISTANCE = 200;
 const BUSH_SAFE_DISTANCE = 30;
 
 
@@ -54,7 +54,7 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
       
       // Define the new spawn range based on flee distance
       const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2;
-      const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 3.0;
+      const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0;
 
       let spawnPos = null;
       let attempts = 0;

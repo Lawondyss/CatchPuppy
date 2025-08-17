@@ -50,5 +50,9 @@ export function createStartScene(k) {
       k.setCursor('default')
       k.go('game')
     })
+
+    k.onKeyPress('space', () => {
+      k.go('game')
+    })
   })
 }
