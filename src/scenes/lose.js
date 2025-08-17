@@ -14,7 +14,7 @@ export function createLoseScene(k) {
 
     new Text(k, 'Konec hry', { line: 0, yOffset, anchor: 'center' })
 
-    new Text(k, 'Chyceno: ' + GameStore.score, { line: 2, yOffset, anchor: 'center' })
+    new Text(k, 'Chycen: ' + GameStore.score, { line: 2, yOffset, anchor: 'center' })
 
     new Text(k, 'Rekord: ' + GameStore.highScore, { line: 3, yOffset, anchor: 'center' })
 

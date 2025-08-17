@@ -9,7 +9,22 @@ import { Bushes } from '../world/bushes.js'
 const PUPPY_FLEE_DISTANCE = 300;
 const BUSH_SAFE_DISTANCE = 30;
 
+
 export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
+  const emitParticles = (pos) => k.add([
+    k.pos(pos),
+    k.particles({
+      max: 100,
+      speed: [100, 200],
+      lifeTime: [2, 3],
+      angle: [0, 360],
+      opacities: [1.0, 0.0],
+    }, {
+      direction: 0,
+      spread: 360,
+    }),
+  ]).emit(20)
+
   k.scene('game', () => {
     GameStore.score = 0
     let timeLimit = START_TIMER
@@ -21,11 +36,11 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
     new Walls(k, WALL_THICKNESS)
 
     const scoreLabel = new Text(k, 'Chycen: ' + GameStore.score, {
-      pos: k.vec2(24, 24),
+      pos: k.vec2(k.width() / 2 - 200, 20),
     })
 
-    const timerLabel = new Text(k, 'Čas: ' + timer, {
-      pos: k.vec2(24, 60),
+    const timerLabel = new Text(k, 'Zbývající čas: ' + timer, {
+      pos: k.vec2(k.width() / 2, 20),
     })
 
     const player = new Player(k, SPEED)
@@ -35,7 +50,7 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
     bushes.regenerate(player, puppy)
 
     player.onCollide('puppy', () => {
-      k.addKaboom(player.pos)
+      emitParticles(player.pos)
       
       // Define the new spawn range based on flee distance
       const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2;
@@ -90,7 +105,7 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
 
     k.onUpdate(() => {
       timer -= k.dt()
-      timerLabel.text = 'Čas: ' + Math.round(timer)
+      timerLabel.text = 'Zbývající čas: ' + Math.round(timer)
       if (timer <= 0) {
         k.go('lose')
       }
