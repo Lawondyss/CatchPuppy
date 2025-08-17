@@ -4,6 +4,7 @@ export class Player {
     this.speed = speed
     this.gameObject = k.add([
       k.sprite('bean'),
+      k.center(40),
       k.pos(k.width() / 2, k.height() / 2),
       k.area(),
       k.body(),
@@ -11,6 +12,10 @@ export class Player {
     ])
 
     this.setupMovement()
+  }
+
+  get pos() {
+    return this.gameObject.pos
   }
 
   setupMovement() {
@@ -33,9 +38,5 @@ export class Player {
 
   onCollide(tag, callback) {
     this.gameObject.onCollide(tag, callback)
-  }
-
-  get pos() {
-    return this.gameObject.pos
   }
 }

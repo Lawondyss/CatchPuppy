@@ -1,20 +1,21 @@
-const SAFE_DISTANCE = 50;
-const MAX_BUSHES = 40; // Keep pool size high for denser layouts
+const SAFE_DISTANCE = 50
+const MAX_BUSHES = 40 // Keep pool size high for denser layouts
 
 export class Bushes {
   constructor(k, WALL_THICKNESS) {
     this.k = k
     this.WALL_THICKNESS = WALL_THICKNESS
     this.pool = []
-    this.bushWidth = 0;
-    this.bushHeight = 0;
-    this.visualBushArea = 0;
+    this.bushWidth = 0
+    this.bushHeight = 0
+    this.visualBushArea = 0
 
     for (let i = 0; i < MAX_BUSHES; i++) {
       const bush = k.add([
         k.sprite('bush'),
+        k.anchor('center'),
         k.pos(-200, -200),
-        k.area({ scale: 0.9 }),
+        k.area({ scale: 0.8 }),
         k.body({ isStatic: true }),
         'bush',
       ])
@@ -30,14 +31,15 @@ export class Bushes {
   }
 
   _shuffle(array) {
-    let currentIndex = array.length,  randomIndex;
-    while (currentIndex != 0) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
+    let currentIndex = array.length, randomIndex
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex)
+      currentIndex--
       [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex], array[currentIndex]];
+        array[randomIndex], array[currentIndex]
+      ]
     }
-    return array;
+    return array
   }
 
   regenerate(player, puppy) {

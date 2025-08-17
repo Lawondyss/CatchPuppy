@@ -12,6 +12,7 @@ export class Puppy {
 
     this.gameObject = k.add([
       k.sprite('puppy'),
+      k.anchor('center'),
       k.pos(0, 0),
       k.area(),
       k.body(),
@@ -24,6 +25,14 @@ export class Puppy {
 
   get pos() {
     return this.gameObject.pos
+  }
+
+  get width() {
+    return this.gameObject.width
+  }
+
+  get height() {
+    return this.gameObject.height
   }
 
   respawn(position) {
