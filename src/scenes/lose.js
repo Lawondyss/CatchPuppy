@@ -18,9 +18,17 @@ export function createLoseScene(k) {
 
     new Text(k, 'Rekord: ' + GameStore.highScore, { line: 3, yOffset, anchor: 'center' })
 
-    new Text(k, 'Pokračuj libovolnou klávesou', { line: 5, yOffset, anchor: 'center' })
+    //new Text(k, 'Pokračuj mezerníkem / klikem', { line: 5, yOffset, anchor: 'center' })
 
-    k.onKeyPress(() => {
+    k.onKeyDown('space', () => {
+      k.go('start')
+    })
+
+    k.onClick(() => {
+      k.go('start')
+    })
+
+    k.onTouchStart(() => {
       k.go('start')
     })
   })

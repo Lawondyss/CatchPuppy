@@ -3,10 +3,10 @@ export class Player {
     this.k = k
     this.speed = speed
     this.gameObject = k.add([
-      k.sprite('bean'),
-      k.center(40),
+      k.sprite('girl'),
+      k.anchor('center'),
       k.pos(k.width() / 2, k.height() / 2),
-      k.area(),
+      k.area({ scale: 0.9 }),
       k.body(),
       'player',
     ])
@@ -33,6 +33,24 @@ export class Player {
 
     this.k.onKeyDown('down', () => {
       this.gameObject.move(0, this.speed)
+    })
+
+    let startPos = null
+
+    this.k.onTouchStart((pos, t) => {
+      startPos = pos
+    })
+
+    this.k.onTouchMove((pos, t) => {
+      if (!startPos) return
+      //const delta = pos.sub(startPos)
+      const delta = pos.sub(startPos).unit()
+      const dir = this.k.vec2(this.speed * delta.x, this.speed * delta.y)
+      this.gameObject.move(dir)
+    })
+
+    this.k.onTouchEnd(() => {
+      startPos = null
     })
   }
 
