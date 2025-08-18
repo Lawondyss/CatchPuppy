@@ -39,9 +39,9 @@ export class Bushes {
 
     if (this.visualBushArea === 0) return
 
-  // Compute playable area inside walls
-  const playableWidth = this.k.width() - this.WALL_THICKNESS * 2
-  const playableHeight = this.k.height() - this.WALL_THICKNESS * 2
+  // Compute playable area: include walls so bushes can reach edges (some may be partially off-screen)
+  const playableWidth = this.k.width()
+  const playableHeight = this.k.height()
 
   // Use separate cell width/height based on bush dimensions. Keep original smaller multiplier
   // (0.8) so bushes can slightly overlap and avoid gaps; do not increase padding.
@@ -51,13 +51,14 @@ export class Bushes {
   // Compute number of cells that fit vertically and horizontally; prefer odd dimensions
   let cols = Math.floor(playableWidth / cellWidth)
   let rows = Math.floor(playableHeight / cellHeight)
-  if (cols < 3 || rows < 3) {
+    if (cols < 3 || rows < 3) {
       // Fallback to original loose grid when playable area too small for maze
       const gridCellWidth = this.bushWidth * 0.8
       const gridCellHeight = this.bushHeight * 0.8
       const gridPositions = []
-      for (let x = this.WALL_THICKNESS; x < playableWidth - gridCellWidth; x += gridCellWidth) {
-        for (let y = this.WALL_THICKNESS; y < playableHeight - gridCellHeight; y += gridCellHeight) {
+      // start at 0 so bushes can be placed up to the very edge (may overlap walls)
+      for (let x = 0; x < playableWidth - gridCellWidth; x += gridCellWidth) {
+        for (let y = 0; y < playableHeight - gridCellHeight; y += gridCellHeight) {
           const pos = this.k.vec2(x + this.bushWidth / 2, y + this.bushHeight / 2)
           if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
             gridPositions.push(pos)
@@ -86,8 +87,9 @@ export class Bushes {
 
     const totalMazeWidth = cols * cellWidth
     const totalMazeHeight = rows * cellHeight
-    const offsetX = this.WALL_THICKNESS + Math.floor((playableWidth - totalMazeWidth) / 2)
-    const offsetY = this.WALL_THICKNESS + Math.floor((playableHeight - totalMazeHeight) / 2)
+  // center maze inside full canvas (including walls)
+  const offsetX = Math.floor((playableWidth - totalMazeWidth) / 2)
+  const offsetY = Math.floor((playableHeight - totalMazeHeight) / 2)
 
     // Collect fence cell positions
     const fencePositions = []
