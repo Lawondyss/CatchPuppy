@@ -31,6 +31,93 @@ export class Bushes {
     }
   }
 
+
+  regenerate(player, puppy, difficulty = 0) {
+    this.pool.forEach(bush => {
+      bush.pos = this.k.vec2(-200, -200)
+    })
+
+    if (this.visualBushArea === 0) return
+
+    // Compute playable area inside walls
+    const playableWidth = this.k.width() - this.WALL_THICKNESS * 2
+    const playableHeight = this.k.height() - this.WALL_THICKNESS * 2
+
+    // Decide cell size for the maze. Use the larger bush dimension so a wall cell can hold one bush.
+    const bushMaxDim = Math.max(this.bushWidth, this.bushHeight)
+    // Slight padding so bushes don't touch maze boundaries
+    const cellSize = Math.max(16, Math.floor(bushMaxDim * 1.05))
+
+    // Compute number of cells that fit; prefer odd dimensions for maze algorithm
+    let cols = Math.floor(playableWidth / cellSize)
+    let rows = Math.floor(playableHeight / cellSize)
+    if (cols < 3 || rows < 3) {
+      // Fallback to original loose grid when playable area too small for maze
+      const gridCellWidth = this.bushWidth * 0.8
+      const gridCellHeight = this.bushHeight * 0.8
+      const gridPositions = []
+      for (let x = this.WALL_THICKNESS; x < playableWidth - gridCellWidth; x += gridCellWidth) {
+        for (let y = this.WALL_THICKNESS; y < playableHeight - gridCellHeight; y += gridCellHeight) {
+          const pos = this.k.vec2(x + this.bushWidth / 2, y + this.bushHeight / 2)
+          if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
+            gridPositions.push(pos)
+          }
+        }
+      }
+      const shuffledPositions = this._shuffle(gridPositions)
+      const playableArea = playableWidth * playableHeight
+      const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
+      let numBushesToPlace = Math.floor(targetCoverageArea / this.visualBushArea)
+      numBushesToPlace = Math.min(numBushesToPlace, this.pool.length, shuffledPositions.length)
+      for (let i = 0; i < numBushesToPlace; i++) {
+        const bush = this.pool[i]
+        bush.pos = shuffledPositions[i]
+      }
+      return
+    }
+
+    if ((cols % 2) === 0) cols--
+    if ((rows % 2) === 0) rows--
+
+    // Generate maze map and turn into level map where '#' are fence cells
+    const levelMap = this._createMazeLevelMap(cols, rows)
+
+    // Center maze inside playable area
+    const totalMazeWidth = cols * cellSize
+    const totalMazeHeight = rows * cellSize
+    const offsetX = this.WALL_THICKNESS + Math.floor((playableWidth - totalMazeWidth) / 2)
+    const offsetY = this.WALL_THICKNESS + Math.floor((playableHeight - totalMazeHeight) / 2)
+
+    // Collect fence cell positions
+    const fencePositions = []
+    for (let r = 0; r < rows; r++) {
+      const line = levelMap[r]
+      for (let c = 0; c < cols; c++) {
+        if (line[c] === '#') {
+          const x = offsetX + c * cellSize + cellSize / 2
+          const y = offsetY + r * cellSize + cellSize / 2
+          const pos = this.k.vec2(x, y)
+          if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
+            fencePositions.push(pos)
+          }
+        }
+      }
+    }
+
+    // Determine target number of bushes by coverage
+    const playableArea = playableWidth * playableHeight
+    const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
+    let numBushesToPlace = Math.floor(targetCoverageArea / this.visualBushArea)
+    numBushesToPlace = Math.min(numBushesToPlace, this.pool.length, fencePositions.length)
+
+    const chosen = this._shuffle(fencePositions).slice(0, numBushesToPlace)
+    for (let i = 0; i < chosen.length; i++) {
+      const bush = this.pool[i]
+      bush.pos = chosen[i]
+    }
+  }
+
+
   _shuffle(array) {
     let currentIndex = array.length, randomIndex
     while (currentIndex !== 0) {
@@ -43,43 +130,77 @@ export class Bushes {
     return array
   }
 
-  regenerate(player, puppy, difficulty = 0) {
-    this.pool.forEach(bush => {
-      bush.pos = this.k.vec2(-200, -200)
+
+  _createMazeLevelMap(width, height) {
+    const map = this._createMazeMap(width, height)
+    const space = ' '
+    const fence = '#'
+    const symbolMap = map.map((s) => s === 1 ? fence : space)
+
+    const levelMap = []
+    for (let i = 0; i < height; i++) {
+      levelMap.push(symbolMap.slice(i * width, i * width + width).join(''))
+    }
+
+    return levelMap
+  }
+
+  _createMazeMap(width, height) {
+    const size = width * height;
+    const map = new Array(size).fill(1, 0, size)
+    map.forEach((_, index) => {
+      const x = Math.floor(index / width)
+      const y = Math.floor(index % width)
+      if ((x & 1) === 1 && (y & 1) === 1) {
+        map[index] = 2
+      }
     })
 
-    if (this.visualBushArea === 0) return
+    const stack = []
+    const startX = Math.floor(Math.random() * (width - 1)) | 1
+    const startY = Math.floor(Math.random() * (height - 1)) | 1
+    const start = startX + startY * width
 
-    // 1. Define a smaller grid cell size to allow for overlapping, creating a maze-like effect.
-    const gridCellWidth = this.bushWidth * 0.8
-    const gridCellHeight = this.bushHeight * 0.8
-    const playableWidth = this.k.width() - this.WALL_THICKNESS * 2
-    const playableHeight = this.k.height() - this.WALL_THICKNESS * 2
+    map[start] = 0
+    stack.push(start)
 
-    // 2. Create a list of all possible grid positions
-    const gridPositions = []
-    for (let x = this.WALL_THICKNESS; x < playableWidth - gridCellWidth; x += gridCellWidth) {
-      for (let y = this.WALL_THICKNESS; y < playableHeight - gridCellHeight; y += gridCellHeight) {
-        const pos = this.k.vec2(x + this.bushWidth / 2, y + this.bushHeight / 2)
-        if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
-          gridPositions.push(pos)
-        }
+    while (stack.length) {
+      const index = stack.pop()
+      const neighbours = this._getUnvisitedNeighbours(map, index, size, width)
+
+      if (neighbours.length > 0) {
+        stack.push(index)
+        const neighbour = neighbours[Math.floor(neighbours.length * Math.random())]
+        const between = (index + neighbour) / 2
+        map[neighbour] = 0
+        map[between] = 0
+        stack.push(neighbour)
       }
     }
 
-    // 3. Shuffle the list of valid positions
-    const shuffledPositions = this._shuffle(gridPositions)
+    return map
+  }
 
-    // 4. Calculate how many bushes to place. This is now more of a density metric.
-    const playableArea = playableWidth * playableHeight
-    const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
-    let numBushesToPlace = Math.floor(targetCoverageArea / this.visualBushArea)
-    numBushesToPlace = Math.min(numBushesToPlace, this.pool.length, shuffledPositions.length)
+  _getUnvisitedNeighbours(map, index, size, width) {
+    const n = []
+    const x = Math.floor(index / width)
 
-    // 5. Place the bushes on the selected grid spots
-    for (let i = 0; i < numBushesToPlace; i++) {
-      const bush = this.pool[i]
-      bush.pos = shuffledPositions[i]
+    if (x > 1 && map[index - 2] === 2) {
+      n.push(index - 2)
     }
+
+    if (x < width - 2 && map[index + 2] === 2) {
+      n.push(index + 2)
+    }
+
+    if (index >= 2 * width && map[index - 2 * width] === 2) {
+      n.push(index - 2 * width)
+    }
+
+    if (index < size - 2 * width && map[index + 2 * width] === 2) {
+      n.push(index + 2 * width)
+    }
+
+    return n
   }
 }
