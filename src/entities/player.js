@@ -36,21 +36,26 @@ export class Player {
     })
 
     let startPos = null
+    let movePos = null
 
     this.k.onTouchStart((pos, t) => {
       startPos = pos
     })
 
     this.k.onTouchMove((pos, t) => {
-      if (!startPos) return
-      //const delta = pos.sub(startPos)
-      const delta = pos.sub(startPos).unit()
-      const dir = this.k.vec2(this.speed * delta.x, this.speed * delta.y)
-      this.gameObject.move(dir)
+      movePos = pos
     })
 
     this.k.onTouchEnd(() => {
       startPos = null
+      movePos = null
+    })
+
+    this.k.onUpdate(() => {
+      if (!startPos || !movePos) return
+      const delta = movePos.sub(startPos).unit()
+      const dir = this.k.vec2(this.speed * delta.x, this.speed * delta.y)
+      this.gameObject.move(dir)
     })
   }
 
