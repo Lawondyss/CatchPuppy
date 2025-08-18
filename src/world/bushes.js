@@ -12,24 +12,12 @@ export class Bushes {
     this.bushHeight = 0
     this.visualBushArea = 0
 
-    for (let i = 0; i < MAX_BUSHES; i++) {
-      const bush = k.add([
-        k.sprite('bush'),
-        k.anchor('center'),
-        k.pos(-200, -200),
-        k.area({ scale: 0.8 }),
-        k.body({ isStatic: true }),
-        'bush',
-      ])
-      this.pool.push(bush)
-    }
+    this._initPool()
 
-    if (this.pool.length > 0) {
-      const sampleBush = this.pool[0]
-      this.bushWidth = sampleBush.width
-      this.bushHeight = sampleBush.height
-      this.visualBushArea = sampleBush.width * sampleBush.height
-    }
+    const sampleBush = this.pool[0]
+    this.bushWidth = sampleBush.width
+    this.bushHeight = sampleBush.height
+    this.visualBushArea = sampleBush.width * sampleBush.height
   }
 
 
@@ -40,18 +28,18 @@ export class Bushes {
 
     if (this.visualBushArea === 0) return
 
-  // Compute playable area: include walls so bushes can reach edges (some may be partially off-screen)
-  const playableWidth = this.k.width()
-  const playableHeight = this.k.height()
+    // Compute playable area: include walls so bushes can reach edges (some may be partially off-screen)
+    const playableWidth = this.k.width()
+    const playableHeight = this.k.height()
 
-  // Use separate cell width/height based on bush dimensions. Keep original smaller multiplier
-  // (0.8) so bushes can slightly overlap and avoid gaps; do not increase padding.
-  const cellWidth = Math.max(8, this.bushWidth * 0.8)
-  const cellHeight = Math.max(8, this.bushHeight * 0.8)
+    // Use separate cell width/height based on bush dimensions. Keep original smaller multiplier
+    // (0.8) so bushes can slightly overlap and avoid gaps; do not increase padding.
+    const cellWidth = Math.max(8, this.bushWidth * 0.8)
+    const cellHeight = Math.max(8, this.bushHeight * 0.8)
 
-  // Compute number of cells that fit vertically and horizontally to cover full area
-  let cols = Math.ceil(playableWidth / cellWidth)
-  let rows = Math.ceil(playableHeight / cellHeight)
+    // Compute number of cells that fit vertically and horizontally to cover full area
+    let cols = Math.ceil(playableWidth / cellWidth)
+    let rows = Math.ceil(playableHeight / cellHeight)
     if (cols < 3 || rows < 3) {
       // Fallback to original loose grid when playable area too small for maze
       const gridCellWidth = this.bushWidth * 0.8
@@ -78,21 +66,17 @@ export class Bushes {
       return
     }
 
-  // Ensure odd dimensions for the maze algorithm; prefer expanding to fill edges
-  if ((cols % 2) === 0) cols++
-  if ((rows % 2) === 0) rows++
+    // Ensure odd dimensions for the maze algorithm; prefer expanding to fill edges
+    if ((cols % 2) === 0) cols++
+    if ((rows % 2) === 0) rows++
 
     // Generate maze map and turn into level map where '#' are fence cells
     const levelMap = this._createMazeLevelMap(cols, rows)
 
-    // Center maze inside playable area
-
-    const totalMazeWidth = cols * cellWidth
-    const totalMazeHeight = rows * cellHeight
-  // Center maze so clipping at opposite edges is symmetric; allow negative offsets when
-  // the maze is slightly larger than the canvas so both sides show the same partial bush.
-  const offsetX = Math.floor((playableWidth - totalMazeWidth) / 2)
-  const offsetY = Math.floor((playableHeight - totalMazeHeight) / 2)
+    // Center maze so clipping at opposite edges is symmetric; allow negative offsets when
+    // the maze is slightly larger than the canvas so both sides show the same partial bush.
+    const offsetX = Math.floor((playableWidth - cols * cellWidth) / 2)
+    const offsetY = Math.floor((playableHeight - rows * cellHeight) / 2)
 
     // Collect fence cell positions
     const fencePositions = []
@@ -137,35 +121,18 @@ export class Bushes {
 
     // Filter perimeter for SAFE_DISTANCE
     const validPerimeter = perimeterPositions.filter(p => p.dist(player.pos) > SAFE_DISTANCE && p.dist(puppy.pos) > SAFE_DISTANCE)
-    // Unique by coordinates
-    const uniquePerimeter = []
+    const perimeter = []
     const seen = new Set()
     for (const p of validPerimeter) {
       const kcoord = `${p.x.toFixed(2)}:${p.y.toFixed(2)}`
       if (!seen.has(kcoord)) {
         seen.add(kcoord)
-        uniquePerimeter.push(p)
+        perimeter.push(p)
       }
     }
 
     // Create persistent border entities (once) from uniquePerimeter
-    if (!this.borderEntities || this.borderEntities.length === 0) {
-      this.borderEntities = []
-      const toCreate = uniquePerimeter
-      for (let i = 0; i < toCreate.length; i++) {
-        const p = toCreate[i]
-        // create a dedicated border bush entity not taken from pool
-        const be = this.k.add([
-          this.k.sprite('bush'),
-          this.k.anchor('center'),
-          this.k.pos(p),
-          this.k.area({ scale: 0.8 }),
-          this.k.body({ isStatic: true }),
-          'bush',
-        ].filter(Boolean))
-        this.borderEntities.push(be)
-      }
-    }
+    this._createBorders(perimeter)
 
     // Now place interior bushes from pool according to coverage
     const interiorFence = fencePositions.filter(p => {
@@ -184,6 +151,37 @@ export class Bushes {
     }
   }
 
+  _initPool() {
+    for (let i = 0; i < MAX_BUSHES; i++) {
+      const bush = this.k.add([
+        this.k.sprite('bush'),
+        this.k.anchor('center'),
+        this.k.pos(-200, -200),
+        this.k.area({ scale: 0.8 }),
+        this.k.body({ isStatic: true }),
+        'bush',
+      ])
+      this.pool.push(bush)
+    }
+  }
+
+  _createBorders(perimeter) {
+    if (this.borderEntities.length > 0) return
+
+    for (let i = 0; i < perimeter.length; i++) {
+      const pos = perimeter[i]
+      const borderBush = this.k.add([
+        this.k.sprite('bush'),
+        this.k.anchor('center'),
+        this.k.pos(pos),
+        this.k.area({ scale: 0.8 }),
+        this.k.body({ isStatic: true }),
+        'bush',
+      ])
+
+      this.borderEntities.push(borderBush)
+    }
+  }
 
   _shuffle(array) {
     let currentIndex = array.length, randomIndex
@@ -196,7 +194,6 @@ export class Bushes {
     }
     return array
   }
-
 
   _createMazeLevelMap(width, height) {
     const map = this._createMazeMap(width, height)
@@ -213,7 +210,7 @@ export class Bushes {
   }
 
   _createMazeMap(width, height) {
-    const size = width * height;
+    const size = width * height
     const map = new Array(size).fill(1, 0, size)
     map.forEach((_, index) => {
       const x = Math.floor(index / width)
