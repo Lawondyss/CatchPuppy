@@ -71,6 +71,11 @@ protože AI bude všechno znát a na mě zbyde jen ji vést.
 ## P.S.
 Mám pár nápadů, jak vyřešit alespoň problém se vznikem uzavřených míst, ale pro tuto chvíli nechám holky, ať si hrají.
 
+### Edit: verze 1.1.0
+Podařilo se mi Gemini přemluvit, aby použila pro generování pozice keřů proces vytváření bludiště, který jsem převzal
+z jednoho z příkladů, které KAPLAY nabízí. Po několika dalších vylepšeních se teď keře generují na layoutu bludiště.
+Se zvyšující obtížností se bludiště stále více plní.
+
 ## P.P.S.
 Jsem zvědavý, jak se na tento text budu tvářit za pár let. Jestli si něj vzpomenu, rád si ho přečtu a porovnám,
 jak moc se mi má představa budoucnosti naplnila.
