@@ -39,19 +39,19 @@ export class Bushes {
 
     if (this.visualBushArea === 0) return
 
-    // Compute playable area inside walls
-    const playableWidth = this.k.width() - this.WALL_THICKNESS * 2
-    const playableHeight = this.k.height() - this.WALL_THICKNESS * 2
+  // Compute playable area inside walls
+  const playableWidth = this.k.width() - this.WALL_THICKNESS * 2
+  const playableHeight = this.k.height() - this.WALL_THICKNESS * 2
 
-    // Decide cell size for the maze. Use the larger bush dimension so a wall cell can hold one bush.
-    const bushMaxDim = Math.max(this.bushWidth, this.bushHeight)
-    // Slight padding so bushes don't touch maze boundaries
-    const cellSize = Math.max(16, Math.floor(bushMaxDim * 1.05))
+  // Use separate cell width/height based on bush dimensions. Keep original smaller multiplier
+  // (0.8) so bushes can slightly overlap and avoid gaps; do not increase padding.
+  const cellWidth = Math.max(8, this.bushWidth * 0.8)
+  const cellHeight = Math.max(8, this.bushHeight * 0.8)
 
-    // Compute number of cells that fit; prefer odd dimensions for maze algorithm
-    let cols = Math.floor(playableWidth / cellSize)
-    let rows = Math.floor(playableHeight / cellSize)
-    if (cols < 3 || rows < 3) {
+  // Compute number of cells that fit vertically and horizontally; prefer odd dimensions
+  let cols = Math.floor(playableWidth / cellWidth)
+  let rows = Math.floor(playableHeight / cellHeight)
+  if (cols < 3 || rows < 3) {
       // Fallback to original loose grid when playable area too small for maze
       const gridCellWidth = this.bushWidth * 0.8
       const gridCellHeight = this.bushHeight * 0.8
@@ -83,8 +83,9 @@ export class Bushes {
     const levelMap = this._createMazeLevelMap(cols, rows)
 
     // Center maze inside playable area
-    const totalMazeWidth = cols * cellSize
-    const totalMazeHeight = rows * cellSize
+
+    const totalMazeWidth = cols * cellWidth
+    const totalMazeHeight = rows * cellHeight
     const offsetX = this.WALL_THICKNESS + Math.floor((playableWidth - totalMazeWidth) / 2)
     const offsetY = this.WALL_THICKNESS + Math.floor((playableHeight - totalMazeHeight) / 2)
 
@@ -94,8 +95,8 @@ export class Bushes {
       const line = levelMap[r]
       for (let c = 0; c < cols; c++) {
         if (line[c] === '#') {
-          const x = offsetX + c * cellSize + cellSize / 2
-          const y = offsetY + r * cellSize + cellSize / 2
+          const x = offsetX + c * cellWidth + cellWidth / 2
+          const y = offsetY + r * cellHeight + cellHeight / 2
           const pos = this.k.vec2(x, y)
           if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
             fencePositions.push(pos)
