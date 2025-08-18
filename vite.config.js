@@ -8,7 +8,7 @@ export default defineConfig({
     },
     build: {
         // disable this for low bundle sizes
-        sourcemap: true,
+        sourcemap: false,
         rollupOptions: {
             output: {
                 manualChunks: {
