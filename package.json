@@ -1,11 +1,12 @@
 {
-  "name": "puppy",
+  "name": "catch-puppy",
+  "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "preview": "vite preview",
-    "zip": "yarn build && mkdir -p dist && zip -r dist/game.zip dist -x \"**/.DS_Store\""
+    "preview": "vite preview"
   },
   "dependencies": {
     "kaplay": "^3001.0.19"
