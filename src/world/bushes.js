@@ -7,6 +7,7 @@ export class Bushes {
     this.k = k
     this.WALL_THICKNESS = WALL_THICKNESS
     this.pool = []
+    this.borderEntities = []
     this.bushWidth = 0
     this.bushHeight = 0
     this.visualBushArea = 0
@@ -48,9 +49,9 @@ export class Bushes {
   const cellWidth = Math.max(8, this.bushWidth * 0.8)
   const cellHeight = Math.max(8, this.bushHeight * 0.8)
 
-  // Compute number of cells that fit vertically and horizontally; prefer odd dimensions
-  let cols = Math.floor(playableWidth / cellWidth)
-  let rows = Math.floor(playableHeight / cellHeight)
+  // Compute number of cells that fit vertically and horizontally to cover full area
+  let cols = Math.ceil(playableWidth / cellWidth)
+  let rows = Math.ceil(playableHeight / cellHeight)
     if (cols < 3 || rows < 3) {
       // Fallback to original loose grid when playable area too small for maze
       const gridCellWidth = this.bushWidth * 0.8
@@ -77,8 +78,9 @@ export class Bushes {
       return
     }
 
-    if ((cols % 2) === 0) cols--
-    if ((rows % 2) === 0) rows--
+  // Ensure odd dimensions for the maze algorithm; prefer expanding to fill edges
+  if ((cols % 2) === 0) cols++
+  if ((rows % 2) === 0) rows++
 
     // Generate maze map and turn into level map where '#' are fence cells
     const levelMap = this._createMazeLevelMap(cols, rows)
@@ -87,7 +89,8 @@ export class Bushes {
 
     const totalMazeWidth = cols * cellWidth
     const totalMazeHeight = rows * cellHeight
-  // center maze inside full canvas (including walls)
+  // Center maze so clipping at opposite edges is symmetric; allow negative offsets when
+  // the maze is slightly larger than the canvas so both sides show the same partial bush.
   const offsetX = Math.floor((playableWidth - totalMazeWidth) / 2)
   const offsetY = Math.floor((playableHeight - totalMazeHeight) / 2)
 
@@ -110,13 +113,74 @@ export class Bushes {
     // Determine target number of bushes by coverage
     const playableArea = playableWidth * playableHeight
     const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
-    let numBushesToPlace = Math.floor(targetCoverageArea / this.visualBushArea)
-    numBushesToPlace = Math.min(numBushesToPlace, this.pool.length, fencePositions.length)
+    let coverageNum = Math.floor(targetCoverageArea / this.visualBushArea)
 
-    const chosen = this._shuffle(fencePositions).slice(0, numBushesToPlace)
-    for (let i = 0; i < chosen.length; i++) {
+    // Build perimeter positions (always consider full border of maze grid)
+    const topY = offsetY + cellHeight / 2
+    const bottomY = offsetY + (rows - 1) * cellHeight + cellHeight / 2
+    const leftX = offsetX + cellWidth / 2
+    const rightX = offsetX + (cols - 1) * cellWidth + cellWidth / 2
+
+    const perimeterPositions = []
+    // top & bottom rows
+    for (let c = 0; c < cols; c++) {
+      const x = offsetX + c * cellWidth + cellWidth / 2
+      perimeterPositions.push(this.k.vec2(x, topY))
+      perimeterPositions.push(this.k.vec2(x, bottomY))
+    }
+    // left & right columns (avoid doubling corners)
+    for (let r = 1; r < rows - 1; r++) {
+      const y = offsetY + r * cellHeight + cellHeight / 2
+      perimeterPositions.push(this.k.vec2(leftX, y))
+      perimeterPositions.push(this.k.vec2(rightX, y))
+    }
+
+    // Filter perimeter for SAFE_DISTANCE
+    const validPerimeter = perimeterPositions.filter(p => p.dist(player.pos) > SAFE_DISTANCE && p.dist(puppy.pos) > SAFE_DISTANCE)
+    // Unique by coordinates
+    const uniquePerimeter = []
+    const seen = new Set()
+    for (const p of validPerimeter) {
+      const kcoord = `${p.x.toFixed(2)}:${p.y.toFixed(2)}`
+      if (!seen.has(kcoord)) {
+        seen.add(kcoord)
+        uniquePerimeter.push(p)
+      }
+    }
+
+    // Create persistent border entities (once) from uniquePerimeter
+    if (!this.borderEntities || this.borderEntities.length === 0) {
+      this.borderEntities = []
+      const toCreate = uniquePerimeter
+      for (let i = 0; i < toCreate.length; i++) {
+        const p = toCreate[i]
+        // create a dedicated border bush entity not taken from pool
+        const be = this.k.add([
+          this.k.sprite('bush'),
+          this.k.anchor('center'),
+          this.k.pos(p),
+          this.k.area({ scale: 0.8 }),
+          this.k.body({ isStatic: true }),
+          'bush',
+        ].filter(Boolean))
+        this.borderEntities.push(be)
+      }
+    }
+
+    // Now place interior bushes from pool according to coverage
+    const interiorFence = fencePositions.filter(p => {
+      const c = Math.round((p.x - offsetX - cellWidth / 2) / cellWidth)
+      const r = Math.round((p.y - offsetY - cellHeight / 2) / cellHeight)
+      // exclude border cells
+      return !(r === 0 || r === rows - 1 || c === 0 || c === cols - 1)
+    })
+
+    const interiorCount = interiorFence.length
+    const numBushesToPlace = Math.min(this.pool.length, Math.floor(coverageNum), interiorCount)
+    const chosenInterior = this._shuffle(interiorFence).slice(0, numBushesToPlace)
+    for (let i = 0; i < chosenInterior.length; i++) {
       const bush = this.pool[i]
-      bush.pos = chosen[i]
+      bush.pos = chosenInterior[i]
     }
   }
 

@@ -1,7 +1,6 @@
 import { GameStore } from '../libs/store.js'
 import { Player } from '../entities/player.js'
 import { Puppy } from '../entities/puppy.js'
-import { Walls } from '../world/walls.js'
 import { Background } from '../libs/background.js'
 import { Text } from '../libs/text.js'
 import { Bushes } from '../world/bushes.js'
@@ -33,8 +32,6 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
     const background = new Background(k)
     const bushes = new Bushes(k, WALL_THICKNESS)
 
-    new Walls(k, WALL_THICKNESS)
-
     const scoreLabel = new Text(k, 'Chycen: ' + GameStore.score, {
       pos: k.vec2(k.width() / 2 - 200, 20),
     })
@@ -51,7 +48,7 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
 
     player.onCollide('puppy', () => {
       emitParticles(player.pos)
-      
+
       // Define the new spawn range based on flee distance
       const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2;
       const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0;
@@ -79,7 +76,7 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
           }
 
           // Check if the position is inside a bush
-          const isInsideBush = bushes.pool.some(bush => 
+          const isInsideBush = bushes.pool.some(bush =>
               bush.pos.x > 0 && // only check active bushes
               candidatePos.dist(bush.pos) < BUSH_SAFE_DISTANCE
           );
@@ -90,7 +87,7 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
       }
 
       puppy.respawn(spawnPos) // Pass the calculated position (or null as fallback)
-      
+
       GameStore.score++
       scoreLabel.text = 'Chycen: ' + GameStore.score
 
