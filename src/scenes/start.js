@@ -20,14 +20,14 @@ export function createStartScene(k) {
       k.anchor("center"),
       k.outline(4),
       k.color(255, 255, 255),
-    ]);
+    ])
 
     // add a child object that displays the text
     btn.add([
       k.text('Start'),
       k.anchor('center'),
       k.color(0, 0, 0),
-    ]);
+    ])
 
     new Text(k, 'Rekord: ' + GameStore.highScore, {
       pos: k.vec2(k.width() / 2, k.height() / 2 + 80),

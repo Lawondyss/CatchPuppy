@@ -13,12 +13,8 @@ export function createLoseScene(k) {
     const yOffset = k.height() / 2 - 3 * 30
 
     new Text(k, 'Konec hry', { line: 0, yOffset, anchor: 'center' })
-
     new Text(k, 'Chycen: ' + GameStore.score, { line: 2, yOffset, anchor: 'center' })
-
     new Text(k, 'Rekord: ' + GameStore.highScore, { line: 3, yOffset, anchor: 'center' })
-
-    //new Text(k, 'Pokračuj mezerníkem / klikem', { line: 5, yOffset, anchor: 'center' })
 
     k.onKeyDown('space', () => {
       k.go('start')

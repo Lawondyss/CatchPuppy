@@ -1,4 +1,4 @@
-const FLEE_DISTANCE = 300;
+const FLEE_DISTANCE = 300
 
 export class Puppy {
   constructor(k, WALL_THICKNESS, player, playerSpeed) {
@@ -37,23 +37,23 @@ export class Puppy {
 
   respawn(position) {
     if (position) {
-        this.gameObject.pos = position;
+      this.gameObject.pos = position
     } else {
-        // Fallback to random position if no specific one is given
-        this.gameObject.pos = this.k.rand(
-          this.k.vec2(this.WALL_THICKNESS, this.WALL_THICKNESS),
-          this.k.vec2(
-            this.k.width() - this.WALL_THICKNESS - this.gameObject.width,
-            this.k.height() - this.WALL_THICKNESS - this.gameObject.height
-          )
+      // Fallback to random position if no specific one is given
+      this.gameObject.pos = this.k.rand(
+        this.k.vec2(this.WALL_THICKNESS, this.WALL_THICKNESS),
+        this.k.vec2(
+          this.k.width() - this.WALL_THICKNESS - this.gameObject.width,
+          this.k.height() - this.WALL_THICKNESS - this.gameObject.height
         )
+      )
     }
   }
 
   update() {
     const dirToPlayer = this.player.pos.sub(this.gameObject.pos)
     const dist = dirToPlayer.len()
-    let currentSpeed = this.wanderSpeed;
+    let currentSpeed = this.wanderSpeed
 
     if (dist < FLEE_DISTANCE) {
       this.direction = dirToPlayer.scale(-1).unit()
