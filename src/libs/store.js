@@ -1,3 +1,5 @@
+import p from '../../package.json' with { type: 'json' }
+
 class Store {
   constructor(namespace) {
     this._namespace = namespace
@@ -22,7 +24,7 @@ class Store {
 
 class Game extends Store {
   constructor() {
-    super('game')
+    super(`game.${p.version}`)
   }
 
   get score() {
