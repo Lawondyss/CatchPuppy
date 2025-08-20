@@ -39,14 +39,24 @@ export class Puppy {
     if (position) {
       this.gameObject.pos = position
     } else {
-      // Fallback to random position if no specific one is given
-      this.gameObject.pos = this.k.rand(
-        this.k.vec2(this.WALL_THICKNESS, this.WALL_THICKNESS),
-        this.k.vec2(
-          this.k.width() - this.WALL_THICKNESS - this.gameObject.width,
-          this.k.height() - this.WALL_THICKNESS - this.gameObject.height
-        )
+      const angle = this.k.rand(0, 2 * Math.PI)
+      const distance = this.k.rand(FLEE_DISTANCE * 1.2, FLEE_DISTANCE * 2)
+      const offset = this.k.vec2(Math.cos(angle), Math.sin(angle)).scale(distance)
+      let newPos = this.player.pos.add(offset)
+
+      // Ensure the puppy spawns within the game boundaries
+      newPos.x = this.k.clamp(
+        newPos.x,
+        this.WALL_THICKNESS,
+        this.k.width() - this.WALL_THICKNESS - this.width
       )
+      newPos.y = this.k.clamp(
+        newPos.y,
+        this.WALL_THICKNESS,
+        this.k.height() - this.WALL_THICKNESS - this.height
+      )
+
+      this.gameObject.pos = newPos
     }
   }
 
@@ -57,7 +67,7 @@ export class Puppy {
 
     if (dist < FLEE_DISTANCE) {
       this.direction = dirToPlayer.scale(-1).unit()
-      currentSpeed = this.fleeSpeed;
+      currentSpeed = this.fleeSpeed
     } else {
       this.wanderTimer -= this.k.dt()
       if (this.wanderTimer <= 0) {
