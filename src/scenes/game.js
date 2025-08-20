@@ -4,28 +4,17 @@ import { Puppy } from '../entities/puppy.js'
 import { Background } from '../libs/background.js'
 import { Button } from '../libs/button.js'
 import { Bushes } from '../world/bushes.js'
+import { createAnimations } from '../libs/animations.js'
 
 const PUPPY_FLEE_DISTANCE = 200
 
 export function createGameScene(k, SPEED, START_TIMER) {
-  const emitParticles = (pos) => k.add([
-    k.pos(pos),
-    k.particles({
-      max: 100,
-      speed: [100, 200],
-      lifeTime: [2, 3],
-      angle: [0, 360],
-      opacities: [1.0, 0.0],
-    }, {
-      direction: 0,
-      spread: 360,
-    }),
-  ]).emit(20)
-
   k.scene('game', () => {
     GameStore.score = 0
     let difficulty = 0
     let timer = START_TIMER
+
+    const animations = createAnimations(k)
 
     const background = new Background(k)
     background.setRandomColor()
@@ -46,7 +35,7 @@ export function createGameScene(k, SPEED, START_TIMER) {
     background.setRandomColor()
 
     player.onCollide('puppy', () => {
-      emitParticles(player.pos)
+      animations.emitParticles(player.pos)
 
       const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
       const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
