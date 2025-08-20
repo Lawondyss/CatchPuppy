@@ -42,29 +42,14 @@ export function createGameScene(k, SPEED, START_TIMER) {
       const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
       const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
 
-      let spawnPos = null
-      let attempts = 0
-      while (!spawnPos && attempts < 50) {
-        attempts++
-        const candidatePos = k.rand(
-          k.vec2(puppy.width, puppy.height),
-          k.vec2(k.width() - puppy.width, k.height() - puppy.height)
-        )
+      const validSpawnPositions = bushes.freePositions.filter(
+        (p) =>
+          p.dist(player.pos) > minSpawnDistance &&
+          p.dist(player.pos) < maxSpawnDistance &&
+          bushes.isFreePosition(p)
+      )
 
-        const distToPlayer = candidatePos.dist(player.pos)
-
-        if (distToPlayer < minSpawnDistance || distToPlayer > maxSpawnDistance) {
-          continue
-        }
-
-        if (!bushes.isFreePosition(candidatePos)) {
-          continue
-        }
-
-        spawnPos = candidatePos
-      }
-
-      puppy.respawn(spawnPos)
+      puppy.respawn(k.choose(validSpawnPositions))
 
       GameStore.score++
       scoreLabel.labelText = `Chycen: ${GameStore.score}`
