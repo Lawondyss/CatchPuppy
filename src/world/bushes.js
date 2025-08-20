@@ -1,149 +1,145 @@
 const SAFE_DISTANCE = 50
-const MAX_BUSHES = 40 // Keep pool size high for denser layouts
 const START_COVERAGE = 0.25
 
 export class Bushes {
-  constructor(k, WALL_THICKNESS) {
+  constructor(k) {
     this.k = k
-    this.WALL_THICKNESS = WALL_THICKNESS
     this.pool = []
     this.borderEntities = []
-    this.bushWidth = 0
-    this.bushHeight = 0
-    this.visualBushArea = 0
+    this._freePositions = []
 
-    this._initPool()
-
-    const sampleBush = this.pool[0]
-    this.bushWidth = sampleBush.width
-    this.bushHeight = sampleBush.height
-    this.visualBushArea = sampleBush.width * sampleBush.height
+    // Získáme rozměry z již načteného spritu, abychom nemuseli vytvářet vzorový objekt
+    const spriteData = this.k.getSprite('bush').data
+    this.bushWidth = spriteData.width
+    this.bushHeight = spriteData.height
+    this.visualBushArea = this.bushWidth * this.bushHeight
   }
 
+  get freePositions() {
+    return this._freePositions
+  }
 
-  regenerate(player, puppy, difficulty = 0) {
+  isFreePosition(checkPos) {
+    return this._freePositions.some(pos => pos.dist(checkPos) < SAFE_DISTANCE)
+  }
+
+  regenerate(difficulty = 0, avoidPosition = null) {
+    this._resetState()
+    if (this.visualBushArea === 0) return
+
+    const grid = this._calculateGrid()
+    const { fencePositions, freePositions, offsetX, offsetY } = this._generatePositions(grid)
+    this._freePositions = freePositions
+
+    this._calculateAndCreateBorders(grid, offsetX, offsetY)
+    this._placeInteriorBushes(difficulty, avoidPosition, fencePositions, grid, offsetX, offsetY)
+  }
+
+  _resetState() {
     this.pool.forEach(bush => {
       bush.pos = this.k.vec2(-200, -200)
     })
+    this._freePositions = []
+  }
 
-    if (this.visualBushArea === 0) return
-
-    // Compute playable area: include walls so bushes can reach edges (some may be partially off-screen)
+  _calculateGrid() {
     const playableWidth = this.k.width()
     const playableHeight = this.k.height()
 
-    // Use separate cell width/height based on bush dimensions. Keep original smaller multiplier
-    // (0.8) so bushes can slightly overlap and avoid gaps; do not increase padding.
-    const cellWidth = Math.max(8, this.bushWidth * 0.8)
-    const cellHeight = Math.max(8, this.bushHeight * 0.8)
+    let cellWidth = Math.max(8, this.bushWidth * 0.8)
+    let cellHeight = Math.max(8, this.bushHeight * 0.8)
 
-    // Compute number of cells that fit vertically and horizontally to cover full area
     let cols = Math.ceil(playableWidth / cellWidth)
     let rows = Math.ceil(playableHeight / cellHeight)
-    if (cols < 3 || rows < 3) {
-      // Fallback to original loose grid when playable area too small for maze
-      const gridCellWidth = this.bushWidth * 0.8
-      const gridCellHeight = this.bushHeight * 0.8
-      const gridPositions = []
-      // start at 0 so bushes can be placed up to the very edge (may overlap walls)
-      for (let x = 0; x < playableWidth - gridCellWidth; x += gridCellWidth) {
-        for (let y = 0; y < playableHeight - gridCellHeight; y += gridCellHeight) {
-          const pos = this.k.vec2(x + this.bushWidth / 2, y + this.bushHeight / 2)
-          if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
-            gridPositions.push(pos)
-          }
-        }
-      }
-      const shuffledPositions = this._shuffle(gridPositions)
-      const playableArea = playableWidth * playableHeight
-      const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
-      let numBushesToPlace = Math.floor(targetCoverageArea / this.visualBushArea)
-      numBushesToPlace = Math.min(numBushesToPlace, this.pool.length, shuffledPositions.length)
-      for (let i = 0; i < numBushesToPlace; i++) {
-        const bush = this.pool[i]
-        bush.pos = shuffledPositions[i]
-      }
-      return
+    while (cellWidth > 8 && cellHeight > 8 && (cols < 5 || rows < 5)) {
+      cellWidth *= 0.9
+      cellHeight *= 0.9
+      cols = Math.ceil(playableWidth / cellWidth)
+      rows = Math.ceil(playableHeight / cellHeight)
     }
 
-    // Ensure odd dimensions for the maze algorithm; prefer expanding to fill edges
     if ((cols % 2) === 0) cols++
     if ((rows % 2) === 0) rows++
 
-    // Generate maze map and turn into level map where '#' are fence cells
+    return { playableWidth, playableHeight, cellWidth, cellHeight, cols, rows }
+  }
+
+  _generatePositions(grid) {
+    const { playableWidth, playableHeight, cellWidth, cellHeight, cols, rows } = grid
     const levelMap = this._createMazeLevelMap(cols, rows)
 
-    // Center maze so clipping at opposite edges is symmetric; allow negative offsets when
-    // the maze is slightly larger than the canvas so both sides show the same partial bush.
     const offsetX = Math.floor((playableWidth - cols * cellWidth) / 2)
     const offsetY = Math.floor((playableHeight - rows * cellHeight) / 2)
 
-    // Collect fence cell positions
     const fencePositions = []
+    const freePositions = []
     for (let r = 0; r < rows; r++) {
       const line = levelMap[r]
       for (let c = 0; c < cols; c++) {
+        const x = offsetX + c * cellWidth + cellWidth / 2
+        const y = offsetY + r * cellHeight + cellHeight / 2
+        const pos = this.k.vec2(x, y)
         if (line[c] === '#') {
-          const x = offsetX + c * cellWidth + cellWidth / 2
-          const y = offsetY + r * cellHeight + cellHeight / 2
-          const pos = this.k.vec2(x, y)
-          if (pos.dist(player.pos) > SAFE_DISTANCE && pos.dist(puppy.pos) > SAFE_DISTANCE) {
-            fencePositions.push(pos)
-          }
+          fencePositions.push(pos)
+        } else {
+          freePositions.push(pos)
         }
       }
     }
+    return { fencePositions, freePositions, offsetX, offsetY }
+  }
 
-    // Determine target number of bushes by coverage
-    const playableArea = playableWidth * playableHeight
-    const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
-    let coverageNum = Math.floor(targetCoverageArea / this.visualBushArea)
+  _calculateAndCreateBorders(grid, offsetX, offsetY) {
+    const { cellWidth, cellHeight, cols, rows } = grid
 
-    // Build perimeter positions (always consider full border of maze grid)
     const topY = offsetY + cellHeight / 2
     const bottomY = offsetY + (rows - 1) * cellHeight + cellHeight / 2
     const leftX = offsetX + cellWidth / 2
     const rightX = offsetX + (cols - 1) * cellWidth + cellWidth / 2
 
-    const perimeterPositions = []
+    const perimeter = []
     // top & bottom rows
     for (let c = 0; c < cols; c++) {
       const x = offsetX + c * cellWidth + cellWidth / 2
-      perimeterPositions.push(this.k.vec2(x, topY))
-      perimeterPositions.push(this.k.vec2(x, bottomY))
+      perimeter.push(this.k.vec2(x, topY))
+      perimeter.push(this.k.vec2(x, bottomY))
     }
     // left & right columns (avoid doubling corners)
     for (let r = 1; r < rows - 1; r++) {
       const y = offsetY + r * cellHeight + cellHeight / 2
-      perimeterPositions.push(this.k.vec2(leftX, y))
-      perimeterPositions.push(this.k.vec2(rightX, y))
+      perimeter.push(this.k.vec2(leftX, y))
+      perimeter.push(this.k.vec2(rightX, y))
     }
 
-    // Filter perimeter for SAFE_DISTANCE
-    const validPerimeter = perimeterPositions.filter(p => p.dist(player.pos) > SAFE_DISTANCE && p.dist(puppy.pos) > SAFE_DISTANCE)
-    const perimeter = []
-    const seen = new Set()
-    for (const p of validPerimeter) {
-      const kcoord = `${p.x.toFixed(2)}:${p.y.toFixed(2)}`
-      if (!seen.has(kcoord)) {
-        seen.add(kcoord)
-        perimeter.push(p)
-      }
-    }
-
-    // Create persistent border entities (once) from uniquePerimeter
     this._createBorders(perimeter)
+  }
 
-    // Now place interior bushes from pool according to coverage
-    const interiorFence = fencePositions.filter(p => {
+  _placeInteriorBushes(difficulty, avoidPosition, fencePositions, grid, offsetX, offsetY) {
+    const { playableWidth, playableHeight, cellWidth, cellHeight, cols, rows } = grid
+
+    const playableArea = playableWidth * playableHeight
+    const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
+    const coverageNum = Math.floor(targetCoverageArea / this.visualBushArea)
+
+    let interiorFence = fencePositions.filter(p => {
       const c = Math.round((p.x - offsetX - cellWidth / 2) / cellWidth)
       const r = Math.round((p.y - offsetY - cellHeight / 2) / cellHeight)
       // exclude border cells
       return !(r === 0 || r === rows - 1 || c === 0 || c === cols - 1)
     })
 
+    if (avoidPosition) {
+      interiorFence = interiorFence.filter(p => p.dist(avoidPosition) > SAFE_DISTANCE)
+    }
+
     const interiorCount = interiorFence.length
-    const numBushesToPlace = Math.min(this.pool.length, Math.floor(coverageNum), interiorCount)
+    const numBushesToPlace = Math.min(Math.floor(coverageNum), interiorCount)
+
+    // Dynamicky zvětšíme pool, pokud je potřeba více keřů
+    while (this.pool.length < numBushesToPlace) {
+      this.pool.push(this._createBush())
+    }
+
     const chosenInterior = this._shuffle(interiorFence).slice(0, numBushesToPlace)
     for (let i = 0; i < chosenInterior.length; i++) {
       const bush = this.pool[i]
@@ -151,18 +147,15 @@ export class Bushes {
     }
   }
 
-  _initPool() {
-    for (let i = 0; i < MAX_BUSHES; i++) {
-      const bush = this.k.add([
-        this.k.sprite('bush'),
-        this.k.anchor('center'),
-        this.k.pos(-200, -200),
-        this.k.area({ scale: 0.8 }),
-        this.k.body({ isStatic: true }),
-        'bush',
-      ])
-      this.pool.push(bush)
-    }
+  _createBush() {
+    return this.k.add([
+      this.k.sprite('bush'),
+      this.k.anchor('center'),
+      this.k.pos(-200, -200),
+      this.k.area({ scale: 0.8 }),
+      this.k.body({ isStatic: true }),
+      'bush',
+    ])
   }
 
   _createBorders(perimeter) {

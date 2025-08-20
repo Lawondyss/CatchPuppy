@@ -2,15 +2,12 @@ import { GameStore } from '../libs/store.js'
 import { Player } from '../entities/player.js'
 import { Puppy } from '../entities/puppy.js'
 import { Background } from '../libs/background.js'
-import { Text } from '../libs/text.js'
 import { Button } from '../libs/button.js'
 import { Bushes } from '../world/bushes.js'
 
 const PUPPY_FLEE_DISTANCE = 200
-const BUSH_SAFE_DISTANCE = 30
 
-
-export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
+export function createGameScene(k, SPEED, START_TIMER) {
   const emitParticles = (pos) => k.add([
     k.pos(pos),
     k.particles({
@@ -31,26 +28,26 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
     let timer = START_TIMER
 
     const background = new Background(k)
-    const bushes = new Bushes(k, WALL_THICKNESS)
+    background.setRandomColor()
 
-    const scoreLabel = new Button(k, 'Chycen: ' + GameStore.score, {
+    const bushes = new Bushes(k)
+    bushes.regenerate()
+
+    const scoreLabel = new Button(k, `Chycen: ${GameStore.score}`, {
       pos: k.vec2(k.width() / 2 - 200, 20),
     })
-
-    const timerLabel = new Button(k, 'Zbývající čas: ' + timer, {
+    const timerLabel = new Button(k, `Zbývající čas: ${timer}`, {
       pos: k.vec2(k.width() / 2, 20),
     })
 
-    const player = new Player(k, SPEED)
-    const puppy = new Puppy(k, WALL_THICKNESS, player, SPEED)
+    const player = new Player(k, SPEED, k.choose(bushes.freePositions))
+    const puppy = new Puppy(k, player, SPEED)
 
     background.setRandomColor()
-    bushes.regenerate(player, puppy)
 
     player.onCollide('puppy', () => {
       emitParticles(player.pos)
 
-      // Define the new spawn range based on flee distance
       const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
       const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
 
@@ -59,38 +56,27 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
       while (!spawnPos && attempts < 50) {
         attempts++
         const candidatePos = k.rand(
-          k.vec2(
-            WALL_THICKNESS + puppy.width,
-            WALL_THICKNESS + puppy.height
-          ),
-          k.vec2(
-            k.width() - WALL_THICKNESS - puppy.width,
-            k.height() - WALL_THICKNESS - puppy.height
-          )
+          k.vec2(puppy.width, puppy.height),
+          k.vec2(k.width() - puppy.width, k.height() - puppy.height)
         )
 
         const distToPlayer = candidatePos.dist(player.pos)
 
-        // Check if the position is within the desired range
         if (distToPlayer < minSpawnDistance || distToPlayer > maxSpawnDistance) {
           continue
         }
 
-        // Check if the position is inside a bush
-        const isInsideBush = bushes.pool.some(bush =>
-          bush.pos.x > 0 && // only check active bushes
-          candidatePos.dist(bush.pos) < BUSH_SAFE_DISTANCE
-        )
-
-        if (!isInsideBush) {
-          spawnPos = candidatePos
+        if (!bushes.isFreePosition(candidatePos)) {
+          continue
         }
+
+        spawnPos = candidatePos
       }
 
-      puppy.respawn(spawnPos) // Pass the calculated position (or null as fallback)
+      puppy.respawn(spawnPos)
 
       GameStore.score++
-      scoreLabel.labelText = 'Chycen: ' + GameStore.score
+      scoreLabel.labelText = `Chycen: ${GameStore.score}`
 
       if (GameStore.score > 0 && GameStore.score % 5 === 0) {
         difficulty++
@@ -98,12 +84,12 @@ export function createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER) {
 
       timer = Math.max(1, START_TIMER - difficulty)
       background.setRandomColor()
-      bushes.regenerate(player, puppy, difficulty)
+      bushes.regenerate(difficulty, player.pos)
     })
 
     k.onUpdate(() => {
       timer -= k.dt()
-      timerLabel.labelText = 'Zbývající čas: ' + Math.round(timer)
+      timerLabel.labelText = `Zbývající čas: ${Math.round(timer)}`
       if (timer <= 0) {
         k.go('lose')
       }

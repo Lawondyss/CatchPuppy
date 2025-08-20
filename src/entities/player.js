@@ -1,11 +1,11 @@
 export class Player {
-  constructor(k, speed) {
+  constructor(k, speed, pos) {
     this.k = k
     this.speed = speed
     this.gameObject = k.add([
       k.sprite('girl'),
       k.anchor('center'),
-      k.pos(k.width() / 2, k.height() / 2),
+      k.pos(pos),
       k.area({ scale: 0.9 }),
       k.body(),
       'player',

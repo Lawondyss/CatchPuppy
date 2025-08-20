@@ -3,16 +3,17 @@ import { createGameScene } from './scenes/game.js'
 import { createLoseScene } from './scenes/lose.js'
 import { createStartScene } from './scenes/start.js'
 
-
 function computeScale() {
-  const size = Math.min(window.innerWidth, window.innerHeight)
+  const size = window.screen.orientation.type.startsWith('landscape')
+    ? window.innerWidth
+    : window.innerHeight
 
   // default desktop
   let scale = 1
   // mobile
   if (size < 800) scale = 0.55
   // tablet
-  else if (800 <= size && size <= 1200) scale = 0.8
+  else if (800 <= size && size <= 1100) scale = 0.8
 
   // slightly reduce scale on very high DPR devices to keep UI readable
   if ((window.devicePixelRatio || 1) > 1.5) scale *= 0.9
@@ -33,11 +34,10 @@ k.loadSprite('girl', 'sprites/girl2.png')
 k.loadSprite('bush', 'sprites/bush.png')
 
 const SPEED = 320
-const WALL_THICKNESS = 50
 const START_TIMER = 10
 
 createStartScene(k)
-createGameScene(k, SPEED, WALL_THICKNESS, START_TIMER)
+createGameScene(k, SPEED, START_TIMER)
 createLoseScene(k)
 
 k.go('start')
