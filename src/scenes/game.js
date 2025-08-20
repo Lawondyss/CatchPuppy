@@ -4,6 +4,7 @@ import { Puppy } from '../entities/puppy.js'
 import { Background } from '../libs/background.js'
 import { Button } from '../libs/button.js'
 import { Bushes } from '../world/bushes.js'
+import { Powerups } from '../entities/powerups.js'
 import { createAnimations } from '../libs/animations.js'
 
 const PUPPY_FLEE_DISTANCE = 200
@@ -31,8 +32,9 @@ export function createGameScene(k, SPEED, START_TIMER) {
 
     const player = new Player(k, SPEED, k.choose(bushes.freePositions))
     const puppy = new Puppy(k, player, SPEED)
+    const powerups = new Powerups(k, player, puppy, bushes)
 
-    background.setRandomColor()
+    k.loop(k.rand(10, 15), () => powerups.spawn())
 
     player.onCollide('puppy', () => {
       animations.emitParticles(player.pos)

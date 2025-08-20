@@ -32,6 +32,7 @@ k.loadRoot('./')
 k.loadSprite('puppy', 'sprites/puppy.png')
 k.loadSprite('girl', 'sprites/girl2.png')
 k.loadSprite('bush', 'sprites/bush.png')
+k.loadSprite('biscuit', 'sprites/biscuit.png')
 
 const SPEED = 320
 const START_TIMER = 10

@@ -7,7 +7,9 @@ export class Puppy {
     this.wanderSpeed = playerSpeed / 2
     this.fleeSpeed = playerSpeed * (3 / 4)
     this.direction = this.k.vec2(0, 0)
+    this.isAttracted = false
     this.wanderTimer = 0
+    this.attractionTimer = 0
 
     this.gameObject = k.add([
       k.sprite('puppy'),
@@ -34,10 +36,15 @@ export class Puppy {
     return this.gameObject.height
   }
 
+  attract(seconds) {
+    this.isAttracted = true
+    this.attractionTimer = seconds ?? 1
+  }
+
   respawn(position) {
-    if (position) {
-      this.gameObject.pos = position
-    } else {
+    this.wanderTimer = 0
+    this.isAttracted = false
+    this.attractionTimer = 0
 
     this.gameObject.pos = position ?? this._findPosition()
   }
@@ -47,7 +54,14 @@ export class Puppy {
     const dist = dirToPlayer.len()
     let currentSpeed = this.wanderSpeed
 
-    if (dist < FLEE_DISTANCE) {
+    if (this.isAttracted) {
+      this.attractionTimer -= this.k.dt()
+      if (this.attractionTimer <= 0) {
+        this.isAttracted = false
+      }
+      this.direction = dirToPlayer.unit()
+      currentSpeed = this.fleeSpeed // Use fleeSpeed to run towards player
+    } else if (dist < FLEE_DISTANCE) {
       this.direction = dirToPlayer.scale(-1).unit()
       currentSpeed = this.fleeSpeed
     } else {
