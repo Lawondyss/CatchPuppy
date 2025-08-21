@@ -20,7 +20,7 @@ export class Biscuit {
   }
 
   activate() {
-    this.puppy.attract(5)
+    this.puppy.attract()
 
     this.animations.showShout('Piškot!', this.player.pos.add(0, -50))
 

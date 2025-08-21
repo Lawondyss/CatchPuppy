@@ -7,9 +7,9 @@ export class Puppy {
     this.wanderSpeed = playerSpeed / 2
     this.fleeSpeed = playerSpeed * (3 / 4)
     this.direction = this.k.vec2(0, 0)
-    this.isAttracted = false
     this.wanderTimer = 0
-    this.attractionTimer = 0
+    this.isAttracted = false
+    this.isAsleep = false
 
     this.gameObject = k.add([
       k.sprite('puppy'),
@@ -20,7 +20,6 @@ export class Puppy {
       'puppy',
     ])
 
-    this.respawn()
     this.gameObject.onUpdate(() => this.update())
   }
 
@@ -36,29 +35,31 @@ export class Puppy {
     return this.gameObject.height
   }
 
-  attract(seconds) {
+  attract() {
     this.isAttracted = true
-    this.attractionTimer = seconds ?? 1
+    this.isAsleep = false
+  }
+
+  sleep() {
+    this.isAsleep = true
   }
 
   respawn(position) {
     this.wanderTimer = 0
     this.isAttracted = false
-    this.attractionTimer = 0
+    this.isAsleep = false
 
-    this.gameObject.pos = position ?? this._findPosition()
+    this.gameObject.pos = position
   }
 
   update() {
+    if (this.isAsleep) return
+
     const dirToPlayer = this.player.pos.sub(this.gameObject.pos)
     const dist = dirToPlayer.len()
     let currentSpeed = this.wanderSpeed
 
     if (this.isAttracted) {
-      this.attractionTimer -= this.k.dt()
-      if (this.attractionTimer <= 0) {
-        this.isAttracted = false
-      }
       this.direction = dirToPlayer.unit()
       currentSpeed = this.fleeSpeed // Use fleeSpeed to run towards player
     } else if (dist < FLEE_DISTANCE) {
@@ -73,26 +74,5 @@ export class Puppy {
     }
 
     this.gameObject.move(this.direction.scale(currentSpeed))
-  }
-
-  _findPosition() {
-    const angle = this.k.rand(0, 2 * Math.PI)
-    const distance = this.k.rand(FLEE_DISTANCE * 1.2, FLEE_DISTANCE * 2)
-    const offset = this.k.vec2(Math.cos(angle), Math.sin(angle)).scale(distance)
-    let positon = this.player.pos.add(offset)
-
-    // Ensure the puppy spawns within the game boundaries
-    positon.x = this.k.clamp(
-      positon.x,
-      this.width,
-      this.k.width() - this.width
-    )
-    positon.y = this.k.clamp(
-      positon.y,
-      this.height,
-      this.k.height() - this.height
-    )
-
-    return positon
   }
 }

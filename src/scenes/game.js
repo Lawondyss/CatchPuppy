@@ -9,6 +9,21 @@ import { createAnimations } from '../libs/animations.js'
 
 const PUPPY_FLEE_DISTANCE = 200
 
+function respawnPuppy(k, player, puppy, bushes) {
+  const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
+  const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
+
+  const validSpawnPositions = bushes.freePositions.filter((p) => {
+    const dist = p.dist(player.pos)
+    return dist > minSpawnDistance && dist < maxSpawnDistance
+  })
+
+  const spawnPos = k.choose(
+    validSpawnPositions.length > 0 ? validSpawnPositions : bushes.freePositions
+  )
+  puppy.respawn(spawnPos)
+}
+
 export function createGameScene(k, SPEED, START_TIMER) {
   k.scene('game', () => {
     GameStore.score = 0
@@ -35,21 +50,10 @@ export function createGameScene(k, SPEED, START_TIMER) {
     const powerups = new Powerups(k, player, puppy, bushes)
 
     k.loop(k.rand(10, 15), () => powerups.spawn())
+    respawnPuppy(k, player, puppy, bushes)
 
     player.onCollide('puppy', () => {
       animations.emitParticles(player.pos)
-
-      const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
-      const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
-
-      const validSpawnPositions = bushes.freePositions.filter(
-        (p) =>
-          p.dist(player.pos) > minSpawnDistance &&
-          p.dist(player.pos) < maxSpawnDistance &&
-          bushes.isFreePosition(p)
-      )
-
-      puppy.respawn(k.choose(validSpawnPositions))
 
       GameStore.score++
       scoreLabel.labelText = `Chycen: ${GameStore.score}`
@@ -61,6 +65,7 @@ export function createGameScene(k, SPEED, START_TIMER) {
       timer = Math.max(1, START_TIMER - difficulty)
       background.setRandomColor()
       bushes.regenerate(difficulty, player.pos)
+      respawnPuppy(k, player, puppy, bushes)
     })
 
     k.onUpdate(() => {
