@@ -1,4 +1,5 @@
 import { Biscuit } from './biscuit.js'
+import { Pillow } from './pillow.js'
 
 export class Powerups {
   constructor(k, player, puppy, bushes) {
@@ -6,7 +7,7 @@ export class Powerups {
     this.player = player
     this.puppy = puppy
     this.bushes = bushes
-    this.availablePowerups = [Biscuit]
+    this.availablePowerups = [Biscuit, Pillow]
   }
 
   spawn() {
