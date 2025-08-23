@@ -1,7 +1,20 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('./player.js').Player} Player
+ * @typedef {import('./puppy.js').Puppy} Puppy
+ * @typedef {import('../world/bushes.js').Bushes} Bushes
+ */
+
 import { Biscuit } from './biscuit.js'
 import { Pillow } from './pillow.js'
 
 export class Powerups {
+  /**
+   * @param {KaplayCtx} k
+   * @param {Player} player
+   * @param {Puppy} puppy
+   * @param {Bushes} bushes
+   */
   constructor(k, player, puppy, bushes) {
     this.k = k
     this.player = player

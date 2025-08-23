@@ -1,6 +1,19 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ * @typedef {import('./player.js').Player} Player
+ * @typedef {import('./puppy.js').Puppy} Puppy
+ */
+
 import { createAnimations } from '../libs/animations.js'
 
 export class Biscuit {
+  /**
+   * @param {KaplayCtx} k
+   * @param {Player} player
+   * @param {Puppy} puppy
+   * @param {Vec2} position
+   */
   constructor(k, player, puppy, position) {
     this.k = k
     this.player = player

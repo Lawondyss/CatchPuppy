@@ -1,3 +1,10 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('../entities/player.js').Player} Player
+ * @typedef {import('../entities/puppy.js').Puppy} Puppy
+ * @typedef {import('../world/bushes.js').Bushes} Bushes
+ */
+
 import { GameStore } from '../libs/store.js'
 import { Player } from '../entities/player.js'
 import { Puppy } from '../entities/puppy.js'
@@ -9,6 +16,12 @@ import { createAnimations } from '../libs/animations.js'
 
 const PUPPY_FLEE_DISTANCE = 200
 
+/**
+ * @param {KaplayCtx} k
+ * @param {Player} player
+ * @param {Puppy} puppy
+ * @param {Bushes} bushes
+ */
 function respawnPuppy(k, player, puppy, bushes) {
   const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
   const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
@@ -24,6 +37,11 @@ function respawnPuppy(k, player, puppy, bushes) {
   puppy.respawn(spawnPos)
 }
 
+/**
+ * @param {KaplayCtx} k
+ * @param {number} SPEED
+ * @param {number} START_TIMER
+ */
 export function createGameScene(k, SPEED, START_TIMER) {
   k.scene('game', () => {
     GameStore.score = 0

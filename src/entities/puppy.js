@@ -1,11 +1,23 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ * @typedef {import('./player.js').Player} Player
+ */
+
 const FLEE_DISTANCE = 300
 
 export class Puppy {
+  /**
+   * @param {KaplayCtx} k
+   * @param {Player} player
+   * @param {number} playerSpeed
+   */
   constructor(k, player, playerSpeed) {
     this.k = k
     this.player = player
     this.wanderSpeed = playerSpeed / 2
     this.fleeSpeed = playerSpeed * (3 / 4)
+    /** @type {Vec2} */
     this.direction = this.k.vec2(0, 0)
     this.wanderTimer = 0
     this.isAttracted = false
@@ -44,6 +56,9 @@ export class Puppy {
     this.isAsleep = true
   }
 
+  /**
+   * @param {Vec2} position
+   */
   respawn(position) {
     this.wanderTimer = 0
     this.isAttracted = false

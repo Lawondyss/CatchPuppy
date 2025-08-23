@@ -1,7 +1,18 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ * @typedef {import('kaplay').Level} Level
+ */
+
 const START_COVERAGE = 0.25
 const BUSH_HITBOX_SCALE = 0.75
 
 class Grid {
+  /**
+   * @param {KaplayCtx} k
+   * @param {number} bushWidth
+   * @param {number} bushHeight
+   */
   constructor(k, bushWidth, bushHeight) {
     this.k = k
     this.bushWidth = bushWidth
@@ -46,14 +57,26 @@ class Grid {
 }
 
 class MazeMap {
+  /**
+   * @param {KaplayCtx} k
+   * @param {Grid} grid
+   */
   constructor(k, grid) {
     this.k = k
     this.grid = grid
+    /** @type {string[]} */
     this.levelMap = []
+    /** @type {Vec2[]} */
     this.freePositions = []
+    /** @type {string[][]} */
     this.initialLevelMap = this._createMazeLevelMap(this.grid.cols, this.grid.rows)
   }
 
+  /**
+   * @param {number} difficulty
+   * @param {number} visualBushArea
+   * @param {(pos: Vec2) => boolean} isPositionBlockedCheck
+   */
   finalize(difficulty, visualBushArea, isPositionBlockedCheck) {
     const interiorFence = []
     const borderFence = []
@@ -102,6 +125,10 @@ class MazeMap {
     })
   }
 
+  /**
+   * @param {any[]} array
+   * @returns {any[]}
+   */
   _shuffle(array) {
     let currentIndex = array.length, randomIndex
     while (currentIndex !== 0) {
@@ -114,6 +141,11 @@ class MazeMap {
     return array
   }
 
+  /**
+   * @param {number} width
+   * @param {number} height
+   * @returns {string[][]}
+   */
   _createMazeLevelMap(width, height) {
     const map = this._createMazeMap(width, height)
     const space = ' '
@@ -128,6 +160,11 @@ class MazeMap {
     return levelMap
   }
 
+  /**
+   * @param {number} width
+   * @param {number} height
+   * @returns {number[]}
+   */
   _createMazeMap(width, height) {
     const size = width * height
     const map = new Array(size).fill(1, 0, size)
@@ -164,6 +201,13 @@ class MazeMap {
     return map
   }
 
+  /**
+   * @param {number[]} map
+   * @param {number} index
+   * @param {number} size
+   * @param {number} width
+   * @returns {number[]}
+   */
   _getUnvisitedNeighbours(map, index, size, width) {
     const n = []
     const x = Math.floor(index / width)
@@ -189,10 +233,16 @@ class MazeMap {
 }
 
 export class Bushes {
+  /**
+   * @param {KaplayCtx} k
+   */
   constructor(k) {
     this.k = k
+    /** @type {Grid | null} */
     this.grid = null
+    /** @type {MazeMap | null} */
     this.mazeMap = null
+    /** @type {Level | null} */
     this.level = null
 
     const spriteData = this.k.getSprite('bush').data
@@ -205,10 +255,18 @@ export class Bushes {
     return this.mazeMap?.freePositions ?? []
   }
 
+  /**
+   * @param {Vec2} checkPos
+   * @returns {boolean}
+   */
   isFreePosition(checkPos) {
     return this.freePositions.some(freePos => this._isPointInCell(checkPos, freePos))
   }
 
+  /**
+   * @param {number} [difficulty]
+   * @param {Vec2 | null} [avoidPosition]
+   */
   regenerate(difficulty = 0, avoidPosition = null) {
     this._resetState()
     if (this.visualBushArea === 0) return
@@ -246,12 +304,18 @@ export class Bushes {
     this.grid = null
   }
 
+  /**
+   * @param {Vec2} point
+   * @param {Vec2} pos
+   * @returns {boolean}
+   */
   _isPointInCell(point, pos) {
+    if (!this.grid) return false
     return (
       point.x >= pos.x &&
-      point.x <= pos.x + this.grid.offsetX &&
+      point.x <= pos.x + this.grid.cellWidth &&
       point.y >= pos.y &&
-      point.y <= pos.y + this.grid.offsetY
+      point.y <= pos.y + this.grid.cellHeight
     )
   }
 }

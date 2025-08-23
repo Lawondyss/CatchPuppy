@@ -1,6 +1,16 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ */
+
 const DEFAULT_LINE_HEIGHT = 30
 
 export class Text {
+  /**
+   * @param {KaplayCtx} k
+   * @param {string} content
+   * @param {{size?: number, color?: any, anchor?: string, pos?: Vec2, line?: number, lineHeight?: number, yOffset?: number, x?: number}} [options]
+   */
   constructor(k, content, options = {}) {
     const textComps = [
       k.text(content, { size: options.size ?? 24 }),
@@ -23,6 +33,9 @@ export class Text {
     this.gameObject = k.add(textComps)
   }
 
+  /**
+   * @param {string} value
+   */
   set text(value) {
     this.gameObject.text = value
   }

@@ -1,4 +1,14 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ */
+
 export class Button {
+  /**
+   * @param {KaplayCtx} k
+   * @param {string} label
+   * @param {{size?: number, padX?: number, padY?: number, pos?: Vec2}} [options]
+   */
   constructor(k, label, options = {}) {
     this.k = k
     this.label = label
@@ -29,6 +39,9 @@ export class Button {
     ])
   }
 
+  /**
+   * @param {string} v
+   */
   set labelText(v) {
     this.text.text = v
   }

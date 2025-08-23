@@ -3,6 +3,9 @@ import { createGameScene } from './scenes/game.js'
 import { createLoseScene } from './scenes/lose.js'
 import { createStartScene } from './scenes/start.js'
 
+/**
+ * @returns {number}
+ */
 function computeScale() {
   const size = window.screen.orientation.type.startsWith('landscape')
     ? window.innerWidth

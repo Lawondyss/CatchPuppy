@@ -1,5 +1,16 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ */
+
+/**
+ * @param {KaplayCtx} k
+ */
 export function createAnimations(k) {
   return {
+    /**
+     * @param {Vec2} pos
+     */
     emitParticles(pos) {
       k.add([
         k.pos(pos),
@@ -19,6 +30,10 @@ export function createAnimations(k) {
       ]).emit(20)
     },
 
+    /**
+     * @param {string} text
+     * @param {Vec2} pos
+     */
     showShout(text, pos) {
       const textSize = 24
       const padding = 10
@@ -33,7 +48,7 @@ export function createAnimations(k) {
         k.lifespan(1, { fade: 0.5 }),
       ]
       const bubble = k.add([
-          ...common,
+        ...common,
         k.pos(pos),
         k.rect(bubbleWidth, bubbleHeight, { radius: 4 }),
         k.color(k.WHITE),
