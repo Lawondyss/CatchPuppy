@@ -7,7 +7,7 @@
 
 import { createAnimations } from '../libs/animations.js'
 
-export class Biscuit {
+export class Pillow {
   /**
    * @param {KaplayCtx} k
    * @param {Player} player
@@ -19,12 +19,12 @@ export class Biscuit {
     this.player = player
     this.puppy = puppy
     this.gameObject = k.add([
-      k.sprite('biscuit'),
+      k.sprite('pillow'),
       k.pos(position.pos),
       k.area(),
       k.anchor('center'),
       'powerup',
-      'biscuit',
+      'pillow',
     ])
 
     this.animations = createAnimations(k)
@@ -33,9 +33,9 @@ export class Biscuit {
   }
 
   activate() {
-    this.puppy.attract()
+    this.puppy.sleep()
 
-    this.animations.showShout('Piškot!', this.player.pos.add(0, -50))
+    this.animations.showShout('Šlofíček!', this.player.pos.add(0, -50))
 
     this.k.destroy(this.gameObject)
   }

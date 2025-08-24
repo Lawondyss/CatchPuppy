@@ -1,7 +1,14 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ */
+
 import { Background } from '../libs/background.js'
 import { GameStore } from '../libs/store.js'
 import { Text } from '../libs/text.js'
 
+/**
+ * @param {KaplayCtx} k
+ */
 export function createLoseScene(k) {
   k.scene('lose', () => {
     new Background(k)

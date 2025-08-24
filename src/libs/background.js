@@ -1,4 +1,11 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ */
+
 export class Background {
+  /**
+   * @param {KaplayCtx} k
+   */
   constructor(k) {
     this.k = k
     this.gameObject = k.add([

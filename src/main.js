@@ -2,7 +2,11 @@ import kaplay from 'kaplay'
 import { createGameScene } from './scenes/game.js'
 import { createLoseScene } from './scenes/lose.js'
 import { createStartScene } from './scenes/start.js'
+import { Config } from './config.js'
 
+/**
+ * @returns {number}
+ */
 function computeScale() {
   const size = window.screen.orientation.type.startsWith('landscape')
     ? window.innerWidth
@@ -31,14 +35,12 @@ const k = kaplay({
 k.loadRoot('./')
 k.loadSprite('puppy', 'sprites/puppy.png')
 k.loadSprite('girl', 'sprites/girl2.png')
-k.loadSprite('bush', 'sprites/bush.png')
+k.loadSprite('bush', 'sprites/bush-square.png')
 k.loadSprite('biscuit', 'sprites/biscuit.png')
-
-const SPEED = 320
-const START_TIMER = 10
+k.loadSprite('pillow', 'sprites/pillow.png')
 
 createStartScene(k)
-createGameScene(k, SPEED, START_TIMER)
+createGameScene(k, Config.PlayerSpeed, Config.StartTimer)
 createLoseScene(k)
 
 k.go('start')

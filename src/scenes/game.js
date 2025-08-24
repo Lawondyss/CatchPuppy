@@ -1,3 +1,10 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('../entities/player.js').Player} Player
+ * @typedef {import('../entities/puppy.js').Puppy} Puppy
+ * @typedef {import('../world/bushes.js').Bushes} Bushes
+ */
+
 import { GameStore } from '../libs/store.js'
 import { Player } from '../entities/player.js'
 import { Puppy } from '../entities/puppy.js'
@@ -6,14 +13,40 @@ import { Button } from '../libs/button.js'
 import { Bushes } from '../world/bushes.js'
 import { Powerups } from '../entities/powerups.js'
 import { createAnimations } from '../libs/animations.js'
+import { Config } from '../config.js'
 
-const PUPPY_FLEE_DISTANCE = 200
+/**
+ * @param {KaplayCtx} k
+ * @param {Player} player
+ * @param {Puppy} puppy
+ * @param {Bushes} bushes
+ */
+function respawnPuppy(k, player, puppy, bushes) {
+  const minSpawnDistance = Config.PuppyFleeDistance * 1.2
+  const maxSpawnDistance = Config.PuppyFleeDistance * 2.0
 
-export function createGameScene(k, SPEED, START_TIMER) {
+  const validSpawnPositions = bushes.freePositions.filter((p) => {
+    const dist = p.pos.dist(player.pos)
+
+    return minSpawnDistance < dist && dist < maxSpawnDistance
+  })
+
+  const spawnPos = k.choose(
+    validSpawnPositions.length > 0 ? validSpawnPositions : bushes.freePositions
+  )
+  puppy.respawn(spawnPos)
+}
+
+/**
+ * @param {KaplayCtx} k
+ * @param {number} speed
+ * @param {number} startTimer
+ */
+export function createGameScene(k, speed, startTimer) {
   k.scene('game', () => {
     GameStore.score = 0
     let difficulty = 0
-    let timer = START_TIMER
+    let timer = startTimer
 
     const animations = createAnimations(k)
 
@@ -30,41 +63,15 @@ export function createGameScene(k, SPEED, START_TIMER) {
       pos: k.vec2(k.width() / 2, 20),
     })
 
-    const player = new Player(k, SPEED, k.choose(bushes.freePositions))
-    const puppy = new Puppy(k, player, SPEED)
+    const player = new Player(k, speed, k.choose(bushes.freePositions))
+    const puppy = new Puppy(k, player, speed, bushes)
     const powerups = new Powerups(k, player, puppy, bushes)
 
     k.loop(k.rand(10, 15), () => powerups.spawn())
+    respawnPuppy(k, player, puppy, bushes)
 
     player.onCollide('puppy', () => {
       animations.emitParticles(player.pos)
-
-      const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
-      const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
-
-      let spawnPos = null
-      let attempts = 0
-      while (!spawnPos && attempts < 50) {
-        attempts++
-        const candidatePos = k.rand(
-          k.vec2(puppy.width, puppy.height),
-          k.vec2(k.width() - puppy.width, k.height() - puppy.height)
-        )
-
-        const distToPlayer = candidatePos.dist(player.pos)
-
-        if (distToPlayer < minSpawnDistance || distToPlayer > maxSpawnDistance) {
-          continue
-        }
-
-        if (!bushes.isFreePosition(candidatePos)) {
-          continue
-        }
-
-        spawnPos = candidatePos
-      }
-
-      puppy.respawn(spawnPos)
 
       GameStore.score++
       scoreLabel.labelText = `Chycen: ${GameStore.score}`
@@ -73,14 +80,15 @@ export function createGameScene(k, SPEED, START_TIMER) {
         difficulty++
       }
 
-      timer = Math.max(1, START_TIMER - difficulty)
+      timer = Math.max(1, startTimer - difficulty)
       background.setRandomColor()
       bushes.regenerate(difficulty, player.pos)
+      respawnPuppy(k, player, puppy, bushes)
     })
 
     k.onUpdate(() => {
       timer -= k.dt()
-      timerLabel.labelText = `Zbývající čas: ${Math.round(timer)}`
+      timerLabel.labelText = `Zbývající čas: ${Math.ceil(timer)}`
       if (timer <= 0) {
         k.go('lose')
       }

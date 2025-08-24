@@ -1,11 +1,22 @@
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ * @typedef {import('kaplay').GameObj} GameObj
+ */
+
 export class Player {
-  constructor(k, speed, pos) {
+  /**
+   * @param {KaplayCtx} k
+   * @param {number} speed
+   * @param {{pos: Vec2, x: number, y: number}} position
+   */
+  constructor(k, speed, position) {
     this.k = k
     this.speed = speed
     this.gameObject = k.add([
       k.sprite('girl'),
       k.anchor('center'),
-      k.pos(pos),
+      k.pos(position.pos),
       k.area({ scale: 0.9 }),
       k.body(),
       'player',
@@ -14,6 +25,10 @@ export class Player {
     this.setupMovement()
   }
 
+  /**
+   * @readonly
+   * @returns {Vec2}
+   */
   get pos() {
     return this.gameObject.pos
   }
@@ -35,14 +50,16 @@ export class Player {
       this.gameObject.move(0, this.speed)
     })
 
+    /** @type {Vec2 | null} */
     let startPos = null
+    /** @type {Vec2 | null} */
     let movePos = null
 
-    this.k.onTouchStart((pos, t) => {
+    this.k.onTouchStart((pos) => {
       startPos = pos
     })
 
-    this.k.onTouchMove((pos, t) => {
+    this.k.onTouchMove((pos) => {
       movePos = pos
     })
 
@@ -59,6 +76,10 @@ export class Player {
     })
   }
 
+  /**
+   * @param {string} tag
+   * @param {(obj: GameObj) => void} callback
+   */
   onCollide(tag, callback) {
     this.gameObject.onCollide(tag, callback)
   }

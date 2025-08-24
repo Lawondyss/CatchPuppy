@@ -1,6 +1,16 @@
-const DEFAULT_LINE_HEIGHT = 30
+/**
+ * @typedef {import('kaplay').KaplayCtx} KaplayCtx
+ * @typedef {import('kaplay').Vec2} Vec2
+ */
+
+import { Config } from '../config.js'
 
 export class Text {
+  /**
+   * @param {KaplayCtx} k
+   * @param {string} content
+   * @param {{size?: number, color?: any, anchor?: string, pos?: Vec2, line?: number, lineHeight?: number, yOffset?: number, x?: number}} [options]
+   */
   constructor(k, content, options = {}) {
     const textComps = [
       k.text(content, { size: options.size ?? 24 }),
@@ -12,7 +22,7 @@ export class Text {
     if (options.pos) {
       position = options.pos
     } else if (options.line !== undefined) {
-      const y = (options.line * (options.lineHeight ?? DEFAULT_LINE_HEIGHT)) + (options.yOffset ?? 0)
+      const y = (options.line * (options.lineHeight ?? Config.DefaultLineHeight)) + (options.yOffset ?? 0)
       const x = options.x ?? k.center().x
       position = k.vec2(x, y)
     } else {
@@ -23,6 +33,9 @@ export class Text {
     this.gameObject = k.add(textComps)
   }
 
+  /**
+   * @param {string} value
+   */
   set text(value) {
     this.gameObject.text = value
   }
