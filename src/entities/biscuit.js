@@ -12,7 +12,7 @@ export class Biscuit {
    * @param {KaplayCtx} k
    * @param {Player} player
    * @param {Puppy} puppy
-   * @param {Vec2} position
+   * @param {{pos: Vec2, x: number, y: number}} position
    */
   constructor(k, player, puppy, position) {
     this.k = k
@@ -20,7 +20,7 @@ export class Biscuit {
     this.puppy = puppy
     this.gameObject = k.add([
       k.sprite('biscuit'),
-      k.pos(position),
+      k.pos(position.pos),
       k.area(),
       k.anchor('center'),
       'powerup',

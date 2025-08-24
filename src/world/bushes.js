@@ -1,7 +1,7 @@
 /**
  * @typedef {import('kaplay').KaplayCtx} KaplayCtx
  * @typedef {import('kaplay').Vec2} Vec2
- * @typedef {import('kaplay').Level} Level
+ * @typedef {import('kaplay').LevelComp} LevelComp
  */
 
 const START_COVERAGE = 0.25
@@ -14,19 +14,27 @@ class Grid {
    * @param {number} bushHeight
    */
   constructor(k, bushWidth, bushHeight) {
-    this.k = k
     this.bushWidth = bushWidth
     this.bushHeight = bushHeight
     this.playableWidth = k.width()
     this.playableHeight = k.height()
-    this.cellWidth = Math.max(8, bushWidth * BUSH_HITBOX_SCALE)
-    this.cellHeight = Math.max(8, bushHeight * BUSH_HITBOX_SCALE)
 
-    this.cols = Math.ceil(this.playableWidth / this.cellWidth)
-    this.rows = Math.ceil(this.playableHeight / this.cellHeight)
+    let cellWidth = Math.max(8, bushWidth * BUSH_HITBOX_SCALE)
+    let cellHeight = Math.max(8, bushHeight * BUSH_HITBOX_SCALE)
+    let cols = Math.ceil(this.playableWidth / cellWidth)
+    let rows = Math.ceil(this.playableHeight / cellHeight)
 
-    this._optimizeSize()
-    this._ensureOddDimensions()
+    while (cellWidth > 8 && cellHeight > 8 && (cols < 5 || rows < 5)) {
+      cellWidth *= 0.9
+      cellHeight *= 0.9
+      cols = Math.ceil(this.playableWidth / cellWidth)
+      rows = Math.ceil(this.playableHeight / cellHeight)
+    }
+
+    this.cellWidth = cellWidth
+    this.cellHeight = cellHeight
+    this.cols = cols + (cols % 2 === 0)
+    this.rows = rows + (rows % 2 === 0)
   }
 
   get offsetX() {
@@ -40,23 +48,12 @@ class Grid {
     const levelPosY = (this.playableHeight - visualHeight) / 2 + this.bushHeight / 2
     return Math.floor(levelPosY)
   }
-
-  _optimizeSize() {
-    while (this.cellWidth > 8 && this.cellHeight > 8 && (this.cols < 5 || this.rows < 5)) {
-      this.cellWidth *= 0.9
-      this.cellHeight *= 0.9
-      this.cols = Math.ceil(this.playableWidth / this.cellWidth)
-      this.rows = Math.ceil(this.playableHeight / this.cellHeight)
-    }
-  }
-
-  _ensureOddDimensions() {
-    if ((this.cols % 2) === 0) this.cols++
-    if ((this.rows % 2) === 0) this.rows++
-  }
 }
 
 class MazeMap {
+  static SymbolSpace = ' '
+  static SymbolFence = '#'
+
   /**
    * @param {KaplayCtx} k
    * @param {Grid} grid
@@ -64,11 +61,8 @@ class MazeMap {
   constructor(k, grid) {
     this.k = k
     this.grid = grid
-    /** @type {string[]} */
-    this.levelMap = []
-    /** @type {Vec2[]} */
+    /** @type {[]|{pos: Vec2, x: number, y: number}[]} */
     this.freePositions = []
-    /** @type {string[][]} */
     this.initialLevelMap = this._createMazeLevelMap(this.grid.cols, this.grid.rows)
   }
 
@@ -83,20 +77,19 @@ class MazeMap {
 
     for (let r = 0; r < this.grid.rows; r++) {
       for (let c = 0; c < this.grid.cols; c++) {
-        if (this.initialLevelMap[r][c] === ' ') continue
+        if (this.initialLevelMap[r][c] === MazeMap.SymbolSpace) continue
 
         const pos = this.k.vec2(
           this.grid.offsetX + c * this.grid.cellWidth + this.grid.cellWidth / 2,
-          this.grid.offsetY + r * this.grid.cellHeight + this.grid.cellHeight / 2
+          this.grid.offsetY + r * this.grid.cellHeight + this.grid.cellHeight / 2,
         )
 
-        if (r === 0 || r === this.grid.rows - 1 || c === 0 || c === this.grid.cols - 1) {
-          borderFence.push({ pos, r, c })
-        } else {
-          interiorFence.push({ pos, r, c })
-        }
+        ;(r === 0 || r === this.grid.rows - 1 || c === 0 || c === this.grid.cols - 1)
+          ? borderFence.push({pos, r, c})
+          : interiorFence.push({pos, r, c})
       }
     }
+
     const availableInterior = interiorFence.filter(item => !isPositionBlockedCheck(item.pos))
 
     const playableArea = this.grid.playableWidth * this.grid.playableHeight
@@ -104,48 +97,31 @@ class MazeMap {
     const coverageNum = Math.floor(targetCoverageArea / visualBushArea)
     const numBushesToPlace = Math.min(Math.floor(coverageNum), availableInterior.length)
 
-    const chosenInterior = this._shuffle(availableInterior).slice(0, numBushesToPlace)
+    const chosenInterior = this.k.shuffle(availableInterior).slice(0, numBushesToPlace)
     const finalLevelMap = Array.from(
-      { length: this.grid.rows },
-      () => new Array(this.grid.cols).fill(' ')
+      {length: this.grid.rows},
+      () => new Array(this.grid.cols).fill(MazeMap.SymbolSpace)
     )
-    borderFence.forEach(item => finalLevelMap[item.r][item.c] = '#')
-    chosenInterior.forEach(item => finalLevelMap[item.r][item.c] = '#')
+    borderFence.forEach(item => finalLevelMap[item.r][item.c] = MazeMap.SymbolFence)
+    chosenInterior.forEach(item => finalLevelMap[item.r][item.c] = MazeMap.SymbolFence)
 
-    this.levelMap = finalLevelMap.map(row => row.join(''))
-
+    this.freePositions = []
     finalLevelMap.forEach((row, r) => {
       row.forEach((cell, c) => {
-        if (cell === '#') return;
-        this.freePositions.push(this.k.vec2(
-          this.grid.offsetX + c * this.grid.cellWidth,
-          this.grid.offsetY + r * this.grid.cellHeight,
-        ))
+        cell === MazeMap.SymbolSpace && this.freePositions.push({
+          pos: this.k.vec2(
+            this.grid.offsetX + c * this.grid.cellWidth,
+            this.grid.offsetY + r * this.grid.cellHeight,
+          ),
+          x: c,
+          y: r,
+        })
       })
     })
+
+    return finalLevelMap.map(row => row.join(''))
   }
 
-  /**
-   * @param {any[]} array
-   * @returns {any[]}
-   */
-  _shuffle(array) {
-    let currentIndex = array.length, randomIndex
-    while (currentIndex !== 0) {
-      randomIndex = Math.floor(Math.random() * currentIndex)
-      currentIndex--
-      [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex], array[currentIndex]
-      ]
-    }
-    return array
-  }
-
-  /**
-   * @param {number} width
-   * @param {number} height
-   * @returns {string[][]}
-   */
   _createMazeLevelMap(width, height) {
     const map = this._createMazeMap(width, height)
     const space = ' '
@@ -210,20 +186,24 @@ class MazeMap {
    */
   _getUnvisitedNeighbours(map, index, size, width) {
     const n = []
-    const x = Math.floor(index / width)
+    const x = index % width
 
+    // Left
     if (x > 1 && map[index - 2] === 2) {
       n.push(index - 2)
     }
 
+    // Right
     if (x < width - 2 && map[index + 2] === 2) {
       n.push(index + 2)
     }
 
+    // Top
     if (index >= 2 * width && map[index - 2 * width] === 2) {
       n.push(index - 2 * width)
     }
 
+    // Bottom
     if (index < size - 2 * width && map[index + 2 * width] === 2) {
       n.push(index + 2 * width)
     }
@@ -238,29 +218,24 @@ export class Bushes {
    */
   constructor(k) {
     this.k = k
-    /** @type {Grid | null} */
-    this.grid = null
-    /** @type {MazeMap | null} */
-    this.mazeMap = null
-    /** @type {Level | null} */
+    /** @type {LevelComp | null} */
     this.level = null
 
     const spriteData = this.k.getSprite('bush').data
     this.bushWidth = spriteData.width
     this.bushHeight = spriteData.height
     this.visualBushArea = this.bushWidth * this.bushHeight
-  }
 
-  get freePositions() {
-    return this.mazeMap?.freePositions ?? []
+    this.grid = new Grid(this.k, this.bushWidth, this.bushHeight)
+    this.mazeMap = new MazeMap(this.k, this.grid)
   }
 
   /**
-   * @param {Vec2} checkPos
-   * @returns {boolean}
+   * @readonly
+   * @returns {[]|{pos: Vec2, x: number, y: number}[]}
    */
-  isFreePosition(checkPos) {
-    return this.freePositions.some(freePos => this._isPointInCell(checkPos, freePos))
+  get freePositions() {
+    return this.mazeMap?.freePositions ?? []
   }
 
   /**
@@ -269,27 +244,27 @@ export class Bushes {
    */
   regenerate(difficulty = 0, avoidPosition = null) {
     this._resetState()
-    if (this.visualBushArea === 0) return
 
-    this.grid = new Grid(this.k, this.bushWidth, this.bushHeight)
-    this.mazeMap = new MazeMap(this.k, this.grid)
+    if (this.visualBushArea === 0) throw Error('visualBushArea is 0')
 
     const isPositionBlockedCheck = (bushPos) => {
       return avoidPosition ? this._isPointInCell(avoidPosition, bushPos) : false
     }
 
-    this.mazeMap.finalize(difficulty, this.visualBushArea, isPositionBlockedCheck)
+    const levelMap = this.mazeMap.finalize(difficulty, this.visualBushArea, isPositionBlockedCheck)
 
-    this.level = this.k.addLevel(this.mazeMap.levelMap, {
+    this.level = this.k.addLevel(levelMap, {
       tileWidth: this.grid.cellWidth,
       tileHeight: this.grid.cellHeight,
       tiles: {
         '#': () => [
           this.k.sprite('bush'),
           this.k.anchor('center'),
-          this.k.area({ scale: BUSH_HITBOX_SCALE }),
-          this.k.body({ isStatic: true }),
-          this.k.tile({ isObstacle: true }),
+          this.k.area({scale: this.grid.cellWidth / this.bushWidth}),
+          this.k.body({isStatic: true}),
+          this.k.tile({
+            isObstacle: true,
+          }),
           'bush',
         ],
       },
@@ -300,8 +275,6 @@ export class Bushes {
   _resetState() {
     this.level?.destroy()
     this.level = null
-    this.mazeMap = null
-    this.grid = null
   }
 
   /**
@@ -310,7 +283,6 @@ export class Bushes {
    * @returns {boolean}
    */
   _isPointInCell(point, pos) {
-    if (!this.grid) return false
     return (
       point.x >= pos.x &&
       point.x <= pos.x + this.grid.cellWidth &&

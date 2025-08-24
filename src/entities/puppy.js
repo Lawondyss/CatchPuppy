@@ -57,14 +57,14 @@ export class Puppy {
   }
 
   /**
-   * @param {Vec2} position
+   * @param {{pos: Vec2, x: number, y: number}} position
    */
   respawn(position) {
     this.wanderTimer = 0
     this.isAttracted = false
     this.isAsleep = false
 
-    this.gameObject.pos = position
+    this.gameObject.moveTo(position.pos)
   }
 
   update() {

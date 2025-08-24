@@ -27,8 +27,9 @@ function respawnPuppy(k, player, puppy, bushes) {
   const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
 
   const validSpawnPositions = bushes.freePositions.filter((p) => {
-    const dist = p.dist(player.pos)
-    return dist > minSpawnDistance && dist < maxSpawnDistance
+    const dist = p.pos.dist(player.pos)
+
+    return minSpawnDistance < dist && dist < maxSpawnDistance
   })
 
   const spawnPos = k.choose(
@@ -88,7 +89,7 @@ export function createGameScene(k, SPEED, START_TIMER) {
 
     k.onUpdate(() => {
       timer -= k.dt()
-      timerLabel.labelText = `Zbývající čas: ${Math.round(timer)}`
+      timerLabel.labelText = `Zbývající čas: ${Math.ceil(timer)}`
       if (timer <= 0) {
         k.go('lose')
       }

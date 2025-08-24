@@ -8,16 +8,15 @@ export class Player {
   /**
    * @param {KaplayCtx} k
    * @param {number} speed
-   * @param {Vec2} pos
+   * @param {{pos: Vec2, x: number, y: number}} position
    */
-  constructor(k, speed, pos) {
+  constructor(k, speed, position) {
     this.k = k
     this.speed = speed
-    /** @type {GameObj} */
     this.gameObject = k.add([
       k.sprite('girl'),
       k.anchor('center'),
-      k.pos(pos),
+      k.pos(position.pos),
       k.area({ scale: 0.9 }),
       k.body(),
       'player',
@@ -26,6 +25,10 @@ export class Player {
     this.setupMovement()
   }
 
+  /**
+   * @readonly
+   * @returns {Vec2}
+   */
   get pos() {
     return this.gameObject.pos
   }
