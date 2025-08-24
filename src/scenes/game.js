@@ -39,14 +39,14 @@ function respawnPuppy(k, player, puppy, bushes) {
 
 /**
  * @param {KaplayCtx} k
- * @param {number} SPEED
- * @param {number} START_TIMER
+ * @param {number} speed
+ * @param {number} startTimer
  */
-export function createGameScene(k, SPEED, START_TIMER) {
+export function createGameScene(k, speed, startTimer) {
   k.scene('game', () => {
     GameStore.score = 0
     let difficulty = 0
-    let timer = START_TIMER
+    let timer = startTimer
 
     const animations = createAnimations(k)
 
@@ -63,8 +63,8 @@ export function createGameScene(k, SPEED, START_TIMER) {
       pos: k.vec2(k.width() / 2, 20),
     })
 
-    const player = new Player(k, SPEED, k.choose(bushes.freePositions))
-    const puppy = new Puppy(k, player, SPEED)
+    const player = new Player(k, speed, k.choose(bushes.freePositions))
+    const puppy = new Puppy(k, player, speed, bushes)
     const powerups = new Powerups(k, player, puppy, bushes)
 
     k.loop(k.rand(10, 15), () => powerups.spawn())
@@ -80,7 +80,7 @@ export function createGameScene(k, SPEED, START_TIMER) {
         difficulty++
       }
 
-      timer = Math.max(1, START_TIMER - difficulty)
+      timer = Math.max(1, startTimer - difficulty)
       background.setRandomColor()
       bushes.regenerate(difficulty, player.pos)
       respawnPuppy(k, player, puppy, bushes)
