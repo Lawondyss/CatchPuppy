@@ -4,8 +4,7 @@
  * @typedef {import('kaplay').LevelComp} LevelComp
  */
 
-const START_COVERAGE = 0.25
-const BUSH_HITBOX_SCALE = 0.75
+import { Config } from '../config.js'
 
 class Grid {
   /**
@@ -19,8 +18,8 @@ class Grid {
     this.playableWidth = k.width()
     this.playableHeight = k.height()
 
-    let cellWidth = Math.max(8, bushWidth * BUSH_HITBOX_SCALE)
-    let cellHeight = Math.max(8, bushHeight * BUSH_HITBOX_SCALE)
+    let cellWidth = Math.max(8, bushWidth * Config.BushHitboxScale)
+    let cellHeight = Math.max(8, bushHeight * Config.BushHitboxScale)
     let cols = Math.ceil(this.playableWidth / cellWidth)
     let rows = Math.ceil(this.playableHeight / cellHeight)
 
@@ -93,7 +92,7 @@ class MazeMap {
     const availableInterior = interiorFence.filter(item => !isPositionBlockedCheck(item.pos))
 
     const playableArea = this.grid.playableWidth * this.grid.playableHeight
-    const targetCoverageArea = playableArea * (START_COVERAGE + difficulty * 0.05)
+    const targetCoverageArea = playableArea * (Config.BushStartCoverage + difficulty * 0.05)
     const coverageNum = Math.floor(targetCoverageArea / visualBushArea)
     const numBushesToPlace = Math.min(Math.floor(coverageNum), availableInterior.length)
 

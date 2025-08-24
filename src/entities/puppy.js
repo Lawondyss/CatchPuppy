@@ -4,7 +4,7 @@
  * @typedef {import('./player.js').Player} Player
  */
 
-const FLEE_DISTANCE = 300
+import { Config } from '../config.js'
 
 export class Puppy {
   static States = {
@@ -82,7 +82,7 @@ export class Puppy {
       Puppy.States.Sleep,
     ].includes(this.state)) {
       // Nothing changes
-    } else if (this.gameObject.pos.dist(this.player.pos) < FLEE_DISTANCE) {
+    } else if (this.gameObject.pos.dist(this.player.pos) < Config.PuppyFleeDistance) {
       this.state = Puppy.States.Flee
     } else {
       this.state = Puppy.States.Wander

@@ -3,7 +3,7 @@
  * @typedef {import('kaplay').Vec2} Vec2
  */
 
-const DEFAULT_LINE_HEIGHT = 30
+import { Config } from '../config.js'
 
 export class Text {
   /**
@@ -22,7 +22,7 @@ export class Text {
     if (options.pos) {
       position = options.pos
     } else if (options.line !== undefined) {
-      const y = (options.line * (options.lineHeight ?? DEFAULT_LINE_HEIGHT)) + (options.yOffset ?? 0)
+      const y = (options.line * (options.lineHeight ?? Config.DefaultLineHeight)) + (options.yOffset ?? 0)
       const x = options.x ?? k.center().x
       position = k.vec2(x, y)
     } else {

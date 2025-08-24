@@ -13,8 +13,7 @@ import { Button } from '../libs/button.js'
 import { Bushes } from '../world/bushes.js'
 import { Powerups } from '../entities/powerups.js'
 import { createAnimations } from '../libs/animations.js'
-
-const PUPPY_FLEE_DISTANCE = 200
+import { Config } from '../config.js'
 
 /**
  * @param {KaplayCtx} k
@@ -23,8 +22,8 @@ const PUPPY_FLEE_DISTANCE = 200
  * @param {Bushes} bushes
  */
 function respawnPuppy(k, player, puppy, bushes) {
-  const minSpawnDistance = PUPPY_FLEE_DISTANCE * 1.2
-  const maxSpawnDistance = PUPPY_FLEE_DISTANCE * 2.0
+  const minSpawnDistance = Config.PuppyFleeDistance * 1.2
+  const maxSpawnDistance = Config.PuppyFleeDistance * 2.0
 
   const validSpawnPositions = bushes.freePositions.filter((p) => {
     const dist = p.pos.dist(player.pos)

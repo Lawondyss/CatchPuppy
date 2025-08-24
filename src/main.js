@@ -2,6 +2,7 @@ import kaplay from 'kaplay'
 import { createGameScene } from './scenes/game.js'
 import { createLoseScene } from './scenes/lose.js'
 import { createStartScene } from './scenes/start.js'
+import { Config } from './config.js'
 
 /**
  * @returns {number}
@@ -38,11 +39,8 @@ k.loadSprite('bush', 'sprites/bush-square.png')
 k.loadSprite('biscuit', 'sprites/biscuit.png')
 k.loadSprite('pillow', 'sprites/pillow.png')
 
-const SPEED = 320
-const START_TIMER = 10
-
 createStartScene(k)
-createGameScene(k, SPEED, START_TIMER)
+createGameScene(k, Config.PlayerSpeed, Config.StartTimer)
 createLoseScene(k)
 
 k.go('start')
