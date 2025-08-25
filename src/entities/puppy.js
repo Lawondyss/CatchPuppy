@@ -6,7 +6,7 @@
  */
 
 import { Config } from '../config.js'
-import { Pathfinding } from '../pathfinding.js'
+import { Pathfinding } from '../world/pathfinding.js'
 
 export class Puppy {
   static States = {
