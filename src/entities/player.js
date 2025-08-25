@@ -4,6 +4,8 @@
  * @typedef {import('kaplay').GameObj} GameObj
  */
 
+import { GameStore } from '../libs/store.js'
+
 export class Player {
   /**
    * @param {KaplayCtx} k
@@ -13,6 +15,7 @@ export class Player {
   constructor(k, speed, position) {
     this.k = k
     this.speed = speed
+    this.isTouchActive = false
     this.gameObject = k.add([
       k.sprite('girl'),
       k.anchor('center'),
@@ -72,6 +75,7 @@ export class Player {
     let movePos = null
 
     this.k.onTouchStart((pos) => {
+      this.isTouchActive = true
       startPos = pos
     })
 
@@ -80,6 +84,7 @@ export class Player {
     })
 
     this.k.onTouchEnd(() => {
+      this.isTouchActive = false
       startPos = null
       movePos = null
     })
@@ -90,9 +95,13 @@ export class Player {
   }
 
   _setupDeviceOrientation() {
+    if (!GameStore.isDeviceOrientationEnabled) return
+
     let tiltVec = this.k.vec2(0, 0)
 
     const onDeviceMove = (evt) => {
+      if (this.isTouchActive) return
+
       tiltVec = (evt.gamma == null || evt.beta == null)
         ? this.k.vec2(0, 0)
         : this.k.vec2(evt.gamma, evt.beta)
@@ -103,6 +112,8 @@ export class Player {
     this.k.onCleanup(() => window.removeEventListener('deviceorientation', onDeviceMove))
 
     this.k.onUpdate(() => {
+      if (this.isTouchActive) return
+
       const threshold = 10
 
       tiltVec.len() > threshold && this.gameObject.move(tiltVec.unit().scale(this.speed))

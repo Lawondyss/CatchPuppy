@@ -66,6 +66,17 @@ class Game extends Store {
   set highScore(value) {
     this.write('highScore', value)
   }
+
+  get isDeviceOrientationEnabled() {
+    return this.read('isDeviceOrientationEnabled') ?? true
+  }
+
+  /**
+   * @param {boolean} value
+   */
+  set isDeviceOrientationEnabled(value) {
+    this.write('isDeviceOrientationEnabled', value)
+  }
 }
 
 export const GameStore = new Game()
