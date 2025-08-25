@@ -15,9 +15,9 @@ function computeScale() {
   // default desktop
   let scale = 1
   // mobile
-  if (size < 800) scale = 0.55
+  if (size < 800) scale = 0.5
   // tablet
-  else if (800 <= size && size <= 1100) scale = 0.8
+  else if (800 <= size && size <= 1100) scale = 0.7
 
   // slightly reduce scale on very high DPR devices to keep UI readable
   if ((window.devicePixelRatio || 1) > 1.5) scale *= 0.9
