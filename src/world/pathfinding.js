@@ -1,5 +1,5 @@
 /**
- * @typedef {import('./world/bushes.js').Bushes} Bushes
+ * @typedef {import('./bushes.js').Bushes} Bushes
  * @typedef {import('kaplay').Vec2} Vec2
  */
 
